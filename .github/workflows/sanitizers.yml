@@ -1,0 +1,55 @@
+name: Sanitizers
+
+# Builds with ASan+UBSan (see cmake/QtTutorialSanitizers.cmake) and runs the
+# full test suite under instrumentation. This is the open-source stand-in
+# for the paid dynamic-analysis tooling (e.g. Squish Coco's runtime checks) —
+# it catches memory errors and undefined behavior that plain unit tests
+# running clean under a normal build would miss.
+#
+# TSan and valgrind are intentionally not wired up as separate jobs yet:
+# this repo has no multi-threaded framework-tour/industries code at present
+# to make a TSan run meaningful, and QtTutorialSanitizers.cmake only exposes
+# a single ASan+UBSan toggle. Add a TSan job here (and a corresponding
+# cmake option, if/when the sanitizer helper gains one) once concurrency
+# examples land under framework-tour/05-concurrency-async or similar.
+on:
+  push:
+    branches: [main]
+  pull_request:
+  workflow_dispatch:
+
+env:
+  QT_VERSION: "6.11.1"
+  QT_MODULES: "qt5compat qtscxml qtserialport qtshadertools qtgraphs"
+  # Fail fast and loud on any sanitizer finding, and print readable
+  # backtraces (symbolizer is on PATH by default on ubuntu-latest runners).
+  ASAN_OPTIONS: "halt_on_error=1:abort_on_error=1"
+  UBSAN_OPTIONS: "halt_on_error=1:print_stacktrace=1"
+
+jobs:
+  asan-ubsan:
+    name: ASan + UBSan
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Install Qt
+        uses: jurplel/install-qt-action@v4
+        with:
+          version: ${{ env.QT_VERSION }}
+          modules: ${{ env.QT_MODULES }}
+          cache: true
+
+      - name: Configure
+        run: >
+          cmake -S . -B build
+          -DCMAKE_BUILD_TYPE=Debug
+          -DQTTUTORIAL_ENABLE_SANITIZERS=ON
+
+      - name: Build
+        run: cmake --build build --parallel
+
+      - name: Test under ASan+UBSan
+        working-directory: build
+        run: ctest --output-on-failure

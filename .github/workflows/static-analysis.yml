@@ -1,0 +1,149 @@
+name: Static Analysis
+
+# Runs the open-source static analyzers that stand in for the
+# license-gated tools (Axivion) documented in docs/qa/licensed-tools.md.
+#
+# IMPORTANT — informational-first, by design:
+#   Framework-tour modules and industry showcase apps are still being
+#   authored by multiple contributors in parallel, so we cannot yet
+#   guarantee the whole tree is clean under any of these analyzers. Every
+#   job below therefore uses `continue-on-error: true` on the analysis step
+#   itself, so a finding is visible in the job log/summary but does NOT fail
+#   the workflow or block a PR.
+#
+#   To tighten this later (the TradingApp reference project's actual gate):
+#     1. Remove `continue-on-error: true` from the relevant step(s).
+#     2. cppcheck and clang-tidy/run-clang-tidy already exit non-zero on any
+#        finding with the flags used below (--error-exitcode=1 /
+#        run-clang-tidy's default non-zero exit on warnings) — no flag
+#        changes needed, just stop swallowing the exit code.
+#     3. For clazy, add `-Xclang -plugin-arg-clazy -Xclang qt4-compat`-style
+#        werror flags or post-process clazy's diagnostic output (clazy itself
+#        has no single --error-exitcode; treat its non-empty output as a
+#        failure in the step, e.g. `test ! -s clazy-report.txt`).
+#
+# All CLI flags below were verified against locally installed versions
+# before being committed:
+#   cppcheck 2.13.0, clang-tidy 18 (run-clang-tidy 18), clazy 1.x
+# (see `<tool> --help` for the authoritative flag list on newer versions —
+# flags have changed across releases in the past).
+#
+# Note on --std=c++23: the locally installed cppcheck 2.13.0's --help text
+# only lists up to c++20 as a documented --std value, but passing
+# --std=c++23 does not error and cppcheck runs normally with it (verified
+# locally) — newer cppcheck releases document c++23 explicitly. --library=qt
+# is included because without it, Qt's `slots`/`signals`/`Q_OBJECT` macros
+# trigger `unknownMacro` false positives (verified locally against
+# framework-tour/02-qml-quick-basics's SystemStatusBackend.h).
+on:
+  push:
+    branches: [main]
+  pull_request:
+  workflow_dispatch:
+
+env:
+  QT_VERSION: "6.11.1"
+  QT_MODULES: "qt5compat qtscxml qtserialport qtshadertools qtgraphs"
+
+jobs:
+  cppcheck:
+    name: cppcheck
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Install cppcheck
+        run: sudo apt-get update && sudo apt-get install -y cppcheck
+
+      - name: Run cppcheck (framework-tour + industries only, build/ excluded)
+        # --error-exitcode=1 is real cppcheck 2.13 syntax; kept live so this
+        # step is one `continue-on-error` removal away from gating merges.
+        continue-on-error: true
+        run: >
+          cppcheck
+          --enable=warning,style,performance,portability
+          --std=c++23
+          --library=qt
+          --error-exitcode=1
+          --inline-suppr
+          -i build
+          framework-tour
+          industries
+
+  clang-tidy:
+    name: clang-tidy
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Install Qt
+        uses: jurplel/install-qt-action@v4
+        with:
+          version: ${{ env.QT_VERSION }}
+          modules: ${{ env.QT_MODULES }}
+          cache: true
+
+      - name: Install clang-tidy
+        run: sudo apt-get update && sudo apt-get install -y clang-tidy clang-tools
+
+      - name: Configure (with compile_commands.json)
+        run: >
+          cmake -S . -B build
+          -DCMAKE_BUILD_TYPE=Debug
+          -DCMAKE_EXPORT_COMPILE_COMMANDS=ON
+
+      - name: Run clang-tidy over framework-tour/ and industries/
+        continue-on-error: true
+        # run-clang-tidy is the LLVM-shipped driver script (verified present
+        # at /usr/bin/run-clang-tidy on the clang-tools package used here);
+        # it takes a regex of files to include, using the build dir's
+        # compile_commands.json for flags. Restrict to the source trees
+        # this repo's contributors write, skip generated/build files.
+        run: >
+          run-clang-tidy
+          -p build
+          -quiet
+          '^(framework-tour|industries)/.*\.(cpp|cc)$'
+
+  clazy:
+    name: clazy
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Install Qt
+        uses: jurplel/install-qt-action@v4
+        with:
+          version: ${{ env.QT_VERSION }}
+          modules: ${{ env.QT_MODULES }}
+          cache: true
+
+      - name: Install clazy
+        run: sudo apt-get update && sudo apt-get install -y clazy
+
+      - name: Configure (with compile_commands.json)
+        run: >
+          cmake -S . -B build
+          -DCMAKE_BUILD_TYPE=Debug
+          -DCMAKE_EXPORT_COMPILE_COMMANDS=ON
+
+      - name: Run clazy over framework-tour/ and industries/ sources
+        continue-on-error: true
+        env:
+          # level0,level1 is the sensible "won't drown you in noise" default
+          # documented by clazy itself (`clazy --list` groups checks into
+          # level0/level1/level2/manual); level2+ is opt-in once the tree is
+          # known-clean at level0/1.
+          CLAZY_CHECKS: "level0,level1"
+        run: |
+          set -euo pipefail
+          find framework-tour industries -name '*.cpp' > clazy-files.txt
+          fail=0
+          while IFS= read -r src; do
+            echo "=== $src ==="
+            clazy-standalone -p build "$src" || fail=1
+          done < clazy-files.txt
+          exit "$fail"

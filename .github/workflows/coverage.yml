@@ -1,0 +1,81 @@
+name: Coverage
+
+# Builds with --coverage instrumentation (see cmake/QtTutorialCoverage.cmake)
+# and produces gcovr HTML + text reports from the resulting gcov data. This
+# covers line/branch/function coverage; MC/DC coverage is a paid-tool gap
+# documented honestly in docs/qa/licensed-tools.md (Squish Coco is the
+# reference project's MC/DC tool and is not available here).
+#
+# gcovr flags below were verified against the locally installed gcovr 8.6
+# (`gcovr --help`) before being committed.
+on:
+  push:
+    branches: [main]
+  pull_request:
+  workflow_dispatch:
+
+env:
+  QT_VERSION: "6.11.1"
+  QT_MODULES: "qt5compat qtscxml qtserialport qtshadertools qtgraphs"
+
+jobs:
+  coverage:
+    name: gcovr coverage report
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Install Qt
+        uses: jurplel/install-qt-action@v4
+        with:
+          version: ${{ env.QT_VERSION }}
+          modules: ${{ env.QT_MODULES }}
+          cache: true
+
+      - name: Install gcovr
+        run: pip install --user gcovr
+
+      - name: Configure
+        run: >
+          cmake -S . -B build
+          -DCMAKE_BUILD_TYPE=Debug
+          -DQTTUTORIAL_ENABLE_COVERAGE=ON
+
+      - name: Build
+        run: cmake --build build --parallel
+
+      - name: Test (generates .gcda coverage data)
+        working-directory: build
+        run: ctest --output-on-failure
+
+      - name: Create report output directory
+        run: mkdir -p coverage-report
+
+      - name: Generate gcovr HTML report
+        run: >
+          gcovr
+          --root .
+          --filter framework-tour
+          --filter industries
+          --exclude '.*/tests/.*'
+          --html-details coverage-report/coverage.html
+          build
+
+      - name: Generate gcovr text summary
+        run: >
+          gcovr
+          --root .
+          --filter framework-tour
+          --filter industries
+          --exclude '.*/tests/.*'
+          --txt coverage-report/coverage.txt
+          --print-summary
+          build
+
+      - name: Upload coverage report artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: coverage-report
+          path: coverage-report/
+          retention-days: 30

@@ -1,0 +1,5 @@
+qttutorial_add_test(test_flight_dynamics
+    SOURCES test_flight_dynamics.cpp
+    LIB onboard_pfd_lib
+    QT_LIBS Qt6::Core
+)

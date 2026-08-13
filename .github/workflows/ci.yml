@@ -1,0 +1,66 @@
+name: CI
+
+# Multiplatform build + test matrix. Backs the "multiplatform" claim in the
+# README with an actual green build on Linux, Windows and macOS, not just a
+# Linux-only smoke test.
+#
+# Qt is installed via jurplel/install-qt-action, which delegates to
+# aqtinstall. The exact addon module names below were verified locally
+# against the real aqt package index for Qt 6.11.1 (see
+# `aqt list-qt linux desktop --modules 6.11.1 linux_gcc_64`, and the
+# equivalent for `mac desktop --modules 6.11.1 clang_64`), so they are known
+# to exist on all three platforms as of this writing:
+#   qt5compat, qtscxml, qtserialport, qtshadertools, qtgraphs
+#
+# Notes on module choices:
+#   - qtbase, qtdeclarative and qtsvg are NOT addon modules in Qt 6 — they
+#     ship as part of the "essential" install and must not be listed here.
+#   - There is no standalone "qtstatemachine" addon module. QStateMachine is
+#     built from the qtscxml source repository in Qt 6, so `qtscxml` is what
+#     provides it.
+#   - qtgraphs is included explicitly since it verified as available for
+#     6.11.1 on all three OSes at the time this workflow was written. If a
+#     future Qt point release drops/renames it for some platform, CMake's
+#     `find_package(Qt6 COMPONENTS Graphs)` in this repo is already optional,
+#     so a missing module degrades gracefully rather than failing the build.
+on:
+  push:
+    branches: [main]
+  pull_request:
+  workflow_dispatch:
+
+env:
+  QT_VERSION: "6.11.1"
+  QT_MODULES: "qt5compat qtscxml qtserialport qtshadertools qtgraphs"
+
+jobs:
+  build-and-test:
+    name: ${{ matrix.os }}
+    runs-on: ${{ matrix.os }}
+    strategy:
+      fail-fast: false
+      matrix:
+        os: [ubuntu-latest, windows-latest, macos-latest]
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Install Qt
+        uses: jurplel/install-qt-action@v4
+        with:
+          version: ${{ env.QT_VERSION }}
+          modules: ${{ env.QT_MODULES }}
+          cache: true
+
+      - name: Configure
+        run: >
+          cmake -S . -B build
+          -DCMAKE_BUILD_TYPE=Release
+
+      - name: Build
+        run: cmake --build build --config Release --parallel
+
+      - name: Test
+        working-directory: build
+        run: ctest --output-on-failure --build-config Release

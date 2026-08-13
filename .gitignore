@@ -1,0 +1,17 @@
+build*/
+*.o
+*.obj
+*.moc
+moc_*.cpp
+qrc_*.cpp
+ui_*.h
+*.gcda
+*.gcno
+*.gcov
+coverage/
+*.user
+*.user.*
+CMakeUserPresets.json
+.vscode/
+.idea/
+*.log
