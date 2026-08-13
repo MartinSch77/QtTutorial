@@ -48,7 +48,11 @@ jobs:
           -DQTTUTORIAL_ENABLE_SANITIZERS=ON
 
       - name: Build
-        run: cmake --build build --parallel
+        # Capped at 2 parallel jobs: ASan/UBSan instrumentation roughly
+        # doubles per-TU memory use, and this repo's ~20 targets under full
+        # `--parallel` (defaults to nproc) OOM-killed the build on a
+        # standard ubuntu-latest runner.
+        run: cmake --build build --parallel 2
 
       - name: Test under ASan+UBSan
         working-directory: build
