@@ -10,7 +10,7 @@ Module `01-widgets-basics` used Qt Widgets, an immediate, retained-mode,
 C++-centric UI toolkit. Qt Quick (QML) is Qt's declarative, scene-graph-based
 alternative: UI is described as a tree of items with property bindings, and
 it is the toolkit backing Qt Quick Controls, Qt Quick 3D, and Qt Graphs (see
-module `10-latest-qt-release-features`). Both toolkits coexist in the same
+module `09-latest-qt-release-features`). Both toolkits coexist in the same
 Qt installation and can be mixed in one application; this module is pure QML
 to keep the concepts isolated.
 

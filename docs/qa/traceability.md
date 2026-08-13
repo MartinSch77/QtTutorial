@@ -14,7 +14,7 @@ framework-tour module or industry example.
 | `framework-tour/06-sql-persistence` | yes | REQ-FW-03, REQ-FW-04 |
 | `framework-tour/07-state-machine` | yes | REQ-FW-03, REQ-FW-04 |
 | `framework-tour/08-serial-and-devices` | yes | REQ-FW-03, REQ-FW-04 |
-| `framework-tour/10-latest-qt-release-features` | yes | REQ-FW-03, REQ-FW-04 |
+| `framework-tour/09-latest-qt-release-features` | yes | REQ-FW-03, REQ-FW-04 |
 | `industries/automotive/offboard-fleet-dashboard` | yes | REQ-IND-02, REQ-IND-03, REQ-IND-05 |
 | `industries/automotive/onboard-instrument-cluster` | yes | REQ-IND-02, REQ-IND-03, REQ-IND-04 |
 | `industries/avionics/offboard-fleet-maintenance` | yes | REQ-IND-02, REQ-IND-03, REQ-IND-05 |

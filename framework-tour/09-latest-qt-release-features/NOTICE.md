@@ -30,5 +30,5 @@ dependency in its own GPL-licensed target instead of pulling that obligation
 into the whole codebase.
 
 If you fork this repository and do not want any GPL-licensed code in it,
-delete `framework-tour/10-latest-qt-release-features/` (and its test
+delete `framework-tour/09-latest-qt-release-features/` (and its test
 directory) — nothing else in the repository depends on it.

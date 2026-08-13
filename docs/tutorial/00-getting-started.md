@@ -9,7 +9,7 @@ follows so that once you've read one, you can navigate the rest quickly.
 
 - **Qt 6.4 or later** (the repo's declared baseline — see the root
   `CMakeLists.txt`'s `find_package(Qt6 6.4 REQUIRED COMPONENTS ...)`).
-  `framework-tour/10-latest-qt-release-features/` additionally needs the
+  `framework-tour/09-latest-qt-release-features/` additionally needs the
   **Qt Graphs** module (Qt 6.9+); if CMake can't find it, that one module is
   skipped and everything else still builds.
 - **CMake 3.21+**.

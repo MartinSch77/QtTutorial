@@ -27,7 +27,7 @@ been reviewed.
   least one QTest test executable registered with `ctest` under
   `tests/framework-tour/<name>/`.
 - **REQ-FW-05**: No framework-tour module outside
-  `framework-tour/10-latest-qt-release-features/` depends on a Qt module
+  `framework-tour/09-latest-qt-release-features/` depends on a Qt module
   that is only available under GPL-3.0-or-later (see
   `docs/qa/licensing.md`) — the GPL carve-out is meant to stay isolated to
   that one directory.
@@ -86,7 +86,7 @@ been reviewed.
   non-zero if any module/example is missing its test directory.
 - **REQ-QA-06**: The per-directory licensing exception described in
   `docs/qa/licensing.md` (GPL-3.0-or-later for
-  `framework-tour/10-latest-qt-release-features/`) is the only license
+  `framework-tour/09-latest-qt-release-features/`) is the only license
   exception in the repo; any new exception must be documented there before
   merging, not discovered later.
 - **REQ-QA-07**: `docs/qa/licensed-tools.md` clearly labels Axivion Suite,

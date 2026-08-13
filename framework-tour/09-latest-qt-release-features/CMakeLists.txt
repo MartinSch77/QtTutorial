@@ -2,7 +2,7 @@ find_package(Qt6 REQUIRED COMPONENTS Quick Qml)
 find_package(Qt6 COMPONENTS Graphs QUIET)
 
 if(NOT TARGET Qt6::Graphs)
-    message(STATUS "Qt6::Graphs not found (needs Qt >= 6.9) - skipping framework-tour/10-latest-qt-release-features")
+    message(STATUS "Qt6::Graphs not found (needs Qt >= 6.9) - skipping framework-tour/09-latest-qt-release-features")
     return()
 endif()
 

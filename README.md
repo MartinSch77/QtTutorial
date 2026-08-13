@@ -50,7 +50,7 @@ ctest --test-dir build --output-on-failure
 
 Requires Qt 6.4 or later (CMake, Ninja/Make, and a C++23 compiler — GCC 13+,
 Clang 16+, or MSVC 2022 17.6+). One module
-(`framework-tour/10-latest-qt-release-features/`) additionally needs the
+(`framework-tour/09-latest-qt-release-features/`) additionally needs the
 **Qt Graphs** module (Qt 6.9+); if it isn't found, CMake skips that one
 module and builds everything else — see that module's own README for why.
 
@@ -85,7 +85,7 @@ Build options (pass as `-D<option>=ON/OFF` to the `cmake -S . -B build` step):
 | 06 | [`sql-persistence`](framework-tour/06-sql-persistence/) | `QtSql`, SQLite, versioned schema migrations, parameterized queries |
 | 07 | [`state-machine`](framework-tour/07-state-machine/) | `QStateMachine`, guarded transitions, any-state error handling |
 | 08 | [`serial-and-devices`](framework-tour/08-serial-and-devices/) | `QSerialPort`/`QSerialPortInfo`, framing/checksum, simulated transport |
-| 10 | [`latest-qt-release-features`](framework-tour/10-latest-qt-release-features/) | Qt Graphs (Qt 6.9+), the current release's headline features |
+| 09 | [`latest-qt-release-features`](framework-tour/09-latest-qt-release-features/) | Qt Graphs (Qt 6.9+), the current release's headline features |
 
 Each module has its own step-by-step tutorial doc under
 [`docs/tutorial/`](docs/tutorial/).
@@ -192,11 +192,11 @@ real safety-critical control, and that document says so plainly.
 ## License
 
 MIT (see [`LICENSE`](LICENSE)) for the whole repository, **except**
-[`framework-tour/10-latest-qt-release-features/`](framework-tour/10-latest-qt-release-features/),
+[`framework-tour/09-latest-qt-release-features/`](framework-tour/09-latest-qt-release-features/),
 which is GPL-3.0-or-later because it links Qt Graphs (no LGPL tier
 available for that module) — see
 [`docs/qa/licensing.md`](docs/qa/licensing.md) for the full breakdown, and
-that module's own [`NOTICE.md`](framework-tour/10-latest-qt-release-features/NOTICE.md).
+that module's own [`NOTICE.md`](framework-tour/09-latest-qt-release-features/NOTICE.md).
 
 Qt itself is used under its own LGPLv3/GPLv3 dual licensing; see
 https://www.qt.io/licensing/.

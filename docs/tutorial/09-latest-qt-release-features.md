@@ -1,6 +1,6 @@
 # Tutorial: Latest Qt Release Features (Qt Graphs)
 
-This walks through `framework-tour/10-latest-qt-release-features/`: a live
+This walks through `framework-tour/09-latest-qt-release-features/`: a live
 multi-sensor telemetry dashboard built on **Qt Graphs**, targeting **Qt
 6.11.1** — including `LineSeries` dash/join/line-style properties that are
 new *in* 6.11, not just "supported as of" it (see §5) — plus a survey of a
@@ -8,7 +8,7 @@ few other genuinely recent Qt highlights.
 
 ## 1. Licensing comes first here
 
-Before anything else: read [`../../framework-tour/10-latest-qt-release-features/NOTICE.md`](../../framework-tour/10-latest-qt-release-features/NOTICE.md).
+Before anything else: read [`../../framework-tour/09-latest-qt-release-features/NOTICE.md`](../../framework-tour/09-latest-qt-release-features/NOTICE.md).
 This is the one module in the repository licensed GPL-3.0-or-later instead
 of MIT, because Qt Graphs is GPLv3-or-commercial with no LGPL escape hatch —
 the same constraint that historically applied to Qt Charts. If you're
@@ -80,7 +80,7 @@ this. The actual sample values come from `TelemetryGenerator::valueAt(...)`
 (`src/TelemetryGenerator.h`, in the `graphs_showcase_lib` static library) —
 a pure function of sensor index and elapsed time, with no dependency on the
 timer or QML at all, which is what makes it directly unit-testable in
-`tests/framework-tour/10-latest-qt-release-features/test_telemetry_generator.cpp`.
+`tests/framework-tour/09-latest-qt-release-features/test_telemetry_generator.cpp`.
 
 ## 5. A feature that is specifically new in Qt 6.11
 

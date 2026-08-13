@@ -11,9 +11,9 @@ add-on module.
 | Path                                                | License              | Reason |
 |------------------------------------------------------|----------------------|--------|
 | Everything except the row below                     | MIT (see `LICENSE`)  | Default project license. |
-| `framework-tour/10-latest-qt-release-features/`      | GPL-3.0-or-later     | Uses the Qt Graphs module. |
+| `framework-tour/09-latest-qt-release-features/`      | GPL-3.0-or-later     | Uses the Qt Graphs module. |
 
-## Why `framework-tour/10-latest-qt-release-features/` is GPL-3.0-or-later
+## Why `framework-tour/09-latest-qt-release-features/` is GPL-3.0-or-later
 
 That module demonstrates Qt Graphs, the successor to the old Qt Charts /
 Qt Data Visualization modules. Like Qt Charts before it, **Qt Graphs is only
@@ -35,7 +35,7 @@ visualization module).
 
 Practically, this means:
 
-- Do not copy code out of `framework-tour/10-latest-qt-release-features/`
+- Do not copy code out of `framework-tour/09-latest-qt-release-features/`
   into a project that isn't itself GPL-compatible.
 - If a future framework-tour module or industry example adds a dependency
   on another GPL-only Qt add-on (Qt Charts itself, if ever reintroduced, is

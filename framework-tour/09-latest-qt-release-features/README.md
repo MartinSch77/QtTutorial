@@ -22,7 +22,7 @@ short, Qt Graphs is GPLv3-or-commercial only, with no LGPL option.
 
 This module only builds if Qt Graphs is available (Qt >= 6.9, roughly). The
 locally installed Qt 6.4.2 used to develop the rest of this repository does
-not have it, so `framework-tour/10-latest-qt-release-features/CMakeLists.txt`
+not have it, so `framework-tour/09-latest-qt-release-features/CMakeLists.txt`
 guards the whole module behind `find_package(Qt6 COMPONENTS Graphs)` and
 `if(TARGET Qt6::Graphs)`, and simply skips it — with a `message(STATUS ...)`
 — rather than failing the repository's configure step.
@@ -39,7 +39,7 @@ guards the whole module behind `find_package(Qt6 COMPONENTS Graphs)` and
   `framework-tour/02-qml-quick-basics`, applied to a streaming-data use case.
 - Deterministic, pure sample generation (`TelemetryGenerator`, in
   `graphs_showcase_lib`) kept separate from the timer/QML wiring, and unit
-  tested in `tests/framework-tour/10-latest-qt-release-features/`.
+  tested in `tests/framework-tour/09-latest-qt-release-features/`.
 
 ## Build & run
 
@@ -50,7 +50,7 @@ Installer). Against Qt 6.4.2 this module is silently skipped.
 ```sh
 cmake -S . -B build
 cmake --build build --target latest_qt_release_features
-./build/framework-tour/10-latest-qt-release-features/latest_qt_release_features
+./build/framework-tour/09-latest-qt-release-features/latest_qt_release_features
 ```
 
 ## Other genuinely current Qt highlights (Qt 6.9–6.11)
