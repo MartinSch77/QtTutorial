@@ -20,6 +20,8 @@ add_subdirectory(home-automation/onboard-wall-panel)
 add_subdirectory(home-automation/offboard-remote-access-app)
 add_subdirectory(defence/onboard-multi-platform-hmi)
 add_subdirectory(defence/offboard-central-command)
+add_subdirectory(factory/onboard-machine-panel)
+add_subdirectory(factory/offboard-digital-twin-control-center)
 
 if(QTTUTORIAL_BUILD_GAMES)
     add_subdirectory(games)

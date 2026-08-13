@@ -41,6 +41,7 @@ find_package(Qt6 6.4 REQUIRED COMPONENTS
     Network Sql StateMachine SerialPort Concurrent
 )
 find_package(Qt6 COMPONENTS Graphs QUIET)
+find_package(Qt6 COMPONENTS Quick3D Quick3DPhysics Quick3DParticles QuickTimeline Multimedia SpatialAudio Mqtt TaskTree LabsStyleKit CanvasPainter QUIET)
 message(STATUS "Qt version found: ${Qt6_VERSION}")
 
 if(QTTUTORIAL_BUILD_TESTS)

@@ -24,6 +24,8 @@ framework-tour module or industry example.
 | `industries/avionics/onboard-primary-flight-display` | yes | REQ-IND-02, REQ-IND-03, REQ-IND-04 |
 | `industries/defence/offboard-central-command` | yes | REQ-IND-02, REQ-IND-03, REQ-IND-05 |
 | `industries/defence/onboard-multi-platform-hmi` | yes | REQ-IND-02, REQ-IND-03, REQ-IND-04 |
+| `industries/factory/offboard-digital-twin-control-center` | yes | REQ-IND-02, REQ-IND-03, REQ-IND-05 |
+| `industries/factory/onboard-machine-panel` | yes | REQ-IND-02, REQ-IND-03, REQ-IND-04 |
 | `industries/home-automation/offboard-remote-access-app` | yes | REQ-IND-02, REQ-IND-03, REQ-IND-05 |
 | `industries/home-automation/onboard-wall-panel` | yes | REQ-IND-02, REQ-IND-03, REQ-IND-04 |
 | `industries/industrial-automation/offboard-plant-scada` | yes | REQ-IND-02, REQ-IND-03, REQ-IND-05 |
@@ -48,4 +50,4 @@ framework-tour module or industry example.
 | `showcases/startrek-bridge` | yes | REQ-SHOWCASE-01, REQ-SHOWCASE-02 |
 | `showcases/stock-tracker` | yes | REQ-SHOWCASE-01, REQ-SHOWCASE-02 |
 
-All 41 module(s)/example(s) have a matching test directory with a CMakeLists.txt.
+All 43 module(s)/example(s) have a matching test directory with a CMakeLists.txt.

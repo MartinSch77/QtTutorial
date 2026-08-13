@@ -21,12 +21,12 @@ This repository is four things at once:
    device I/O, the current Qt release's headline features (Qt Graphs), and
    advanced custom-rendering/XR topics (raw `QRhi` under a QML scene, Qt
    Quick 3D Physics, Qt Quick 3D Xr).
-2. **A multi-industry showcase** (`industries/`) — eleven verticals
+2. **A multi-industry showcase** (`industries/`) — twelve verticals
    (Automotive, Medical, Industrial Automation, Railway, Avionics, Space,
-   Two-Wheelers, Agriculture, Mining, Home Automation, Defence), each split
-   into an **onboard** app (what would run embedded in the vehicle/machine/
-   device) and an **offboard** app (what would run in a fleet/operations/
-   control-room back office).
+   Two-Wheelers, Agriculture, Mining, Home Automation, Defence, Factory),
+   each split into an **onboard** app (what would run embedded in the
+   vehicle/machine/device) and an **offboard** app (what would run in a
+   fleet/operations/control-room back office).
 3. **A LAN-multiplayer games category** (`industries/games/`) — five real
    German card games (Schafkopf, Mau-Mau, Watten, Skat) plus a networked,
    mouse-controlled 3D foosball ("Kicker") game, all playable over a local
@@ -126,6 +126,7 @@ overview, or jump straight to an industry:
 | [Mining](docs/industries/mining.md) | [Haul truck console](industries/mining/onboard-haul-truck-console/) | [Pit operations dashboard](industries/mining/offboard-pit-operations-dashboard/) |
 | [Home Automation](docs/industries/home-automation.md) | [Wall panel](industries/home-automation/onboard-wall-panel/) | [Remote access app](industries/home-automation/offboard-remote-access-app/) |
 | [Defence](docs/industries/defence.md) | [Multi-platform HMI](industries/defence/onboard-multi-platform-hmi/) | [Central command](industries/defence/offboard-central-command/) |
+| [Factory](docs/industries/factory.md) | [Machine panel](industries/factory/onboard-machine-panel/) | [Digital twin control center](industries/factory/offboard-digital-twin-control-center/) (GPL-3.0-or-later, see [Licensing](#license)) |
 
 **Onboard** apps are what would run embedded within the vehicle/machine/
 device itself: fullscreen, kiosk-style Qt Quick or hand-painted UIs, driven
@@ -281,6 +282,7 @@ MIT (see [`LICENSE`](LICENSE)) for the whole repository, **except**:
 - [`framework-tour/09-latest-qt-release-features/`](framework-tour/09-latest-qt-release-features/) — GPL-3.0-or-later (links Qt Graphs)
 - [`framework-tour/10-custom-rendering-and-xr/quick3d-physics-xr/`](framework-tour/10-custom-rendering-and-xr/quick3d-physics-xr/) — GPL-3.0-or-later (links Qt Quick 3D Physics/Xr)
 - [`showcases/stock-tracker/`](showcases/stock-tracker/) — GPL-3.0-or-later (optionally links Qt Graphs when available)
+- [`industries/factory/offboard-digital-twin-control-center/`](industries/factory/offboard-digital-twin-control-center/) — GPL-3.0-or-later (links Qt Quick Timeline unconditionally, plus Qt Graphs and Qt Quick 3D Physics when available)
 
 None of these Qt modules have an LGPL tier — see
 [`docs/qa/licensing.md`](docs/qa/licensing.md) for the full breakdown and

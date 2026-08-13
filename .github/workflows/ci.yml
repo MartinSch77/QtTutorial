@@ -10,7 +10,7 @@ name: CI
 # --modules 6.11.1 linux_gcc_64`), so they are known to exist for this
 # platform/version as of this writing:
 #   qt5compat, qtscxml, qtserialport, qtshadertools, qtgraphs, qtquick3d,
-#   qtquick3dphysics, qtwebsockets
+#   qtquick3dphysics, qtquicktimeline, qtwebsockets
 #
 # Notes on module choices:
 #   - qtbase, qtdeclarative and qtsvg are NOT addon modules in Qt 6 — they
@@ -25,6 +25,16 @@ name: CI
 #     for every one of these is already optional in this repo, so a missing
 #     module on some future platform/version degrades gracefully (that
 #     module's app/feature is skipped) rather than failing the whole build.
+#   - qtquicktimeline is different from the other add-ons above: it is
+#     linked *unconditionally* (no `if(TARGET ...)` guard) by
+#     industries/factory/offboard-digital-twin-control-center, since it's
+#     present on that app's own local Qt 6.4.2 baseline and is the one
+#     load-bearing reason that directory must be GPL-3.0-or-later on every
+#     Qt install (see its NOTICE.md) — it must be listed here or CI's build
+#     of that app fails outright rather than degrading gracefully.
+#     Qt6Quick3DParticles (also used unconditionally by that same app) does
+#     not need a separate entry here: it ships as part of the qtquick3d
+#     aqt module, not as its own addon.
 #   - qtquick3dxr (Qt Quick 3D Xr, used only by the never-built
 #     `XrMain.qml` in framework-tour/10) is deliberately NOT listed: it did
 #     not appear in the aqt module index checked above, and nothing in this
@@ -37,7 +47,7 @@ on:
 
 env:
   QT_VERSION: "6.11.1"
-  QT_MODULES: "qt5compat qtscxml qtserialport qtshadertools qtgraphs qtquick3d qtquick3dphysics qtwebsockets"
+  QT_MODULES: "qt5compat qtscxml qtserialport qtshadertools qtgraphs qtquick3d qtquick3dphysics qtquicktimeline qtwebsockets"
   # Runners have no display server; GUI-linked QTest binaries need this to
   # instantiate QApplication/QGuiApplication without a real windowing system.
   QT_QPA_PLATFORM: "offscreen"

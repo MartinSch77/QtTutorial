@@ -1,0 +1,5 @@
+<RCC>
+    <qresource prefix="/offboard_digital_twin">
+        <file alias="lottie/system-online.json">lottie/system-online.json</file>
+    </qresource>
+</RCC>

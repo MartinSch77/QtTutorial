@@ -1,6 +1,6 @@
 # Industry Showcases
 
-Eleven industries, each with exactly two example applications:
+Twelve industries, each with exactly two example applications:
 
 | Industry | Onboard | Offboard |
 |---|---|---|
@@ -15,8 +15,9 @@ Eleven industries, each with exactly two example applications:
 | [Mining](mining.md) | Haul truck console | Pit operations dashboard |
 | [Home Automation](home-automation.md) | Wall panel | Remote access app |
 | [Defence](defence.md) | Multi-platform HMI | Central command |
+| [Factory](factory.md) | Machine panel | Digital twin control center (GPL-3.0-or-later, see [Licensing](../qa/licensing.md)) |
 
-`industries/games/` is a twelfth entry under `industries/` structurally,
+`industries/games/` is a thirteenth entry under `industries/` structurally,
 but it's a different shape — one app per game, no onboard/offboard split,
 built on a shared LAN transport rather than each reinventing networking.
 See the top-level [README](../../README.md#games) for the games list; this

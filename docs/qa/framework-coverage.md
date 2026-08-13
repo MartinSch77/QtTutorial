@@ -21,7 +21,7 @@ section at the bottom to regenerate this list yourself.
 | Sql | Yes | `framework-tour/06-sql-persistence`, most `offboard-*` apps' history stores |
 | Concurrent | Yes | `framework-tour/05-concurrency-async` (contrasted directly against `std::jthread`) |
 | Test | Yes (as infrastructure) | Every `tests/` directory; no dedicated "how to write a Qt Test" *teaching* module exists, though every test in the repo is a working example |
-| **Multimedia** | **No** | Not linked anywhere. A real gap — audio/video playback, camera capture — none of this repo's simulated-sensor-feed apps happen to need it, but it's a commonly-used Essentials module with no representative here. |
+| **Multimedia** | Attempted, guarded | `industries/factory/offboard-digital-twin-control-center` attempts `Qt6::Multimedia` + `Qt6::SpatialAudio` (`QAudioEngine`/`QAudioListener`/`QSpatialSound`, real APIs verified via Qt Documentation MCP) for its 3D-positioned alarm, `if(TARGET Qt6::Multimedia AND TARGET Qt6::SpatialAudio)`; neither module is present in this repo's local Qt 6.4.2 baseline, so it always falls back to a documented, unit-tested pan/gain math model plus a visual-only alarm banner here. Still a real gap in the sense that no build in this repo's CI has actually exercised the real playback path yet. |
 | **DBus** | **No** | Linux-specific IPC, not covered. |
 | **PrintSupport** | **No** | Not covered — no app in this repo produces a printable report/PDF. |
 | Xml | Indirect only | Used transitively by Qt itself (e.g. SVG parsing); no module demonstrates `QXmlStreamReader`/`QDomDocument` directly. |
@@ -33,11 +33,15 @@ section at the bottom to regenerate this list yourself.
 | SerialPort | Yes | `framework-tour/08-serial-and-devices` (with an honestly-labeled simulated transport) |
 | StateMachine | Yes | `framework-tour/07-state-machine`, and reused conceptually in several industry/game state machines |
 | Svg | Yes | `showcases/stock-tracker` (an SVG icon rendered via `Qt6::Svg`) |
-| Graphs | Yes (guarded) | `framework-tour/09-latest-qt-release-features` (Qt 6.11+ only), `showcases/stock-tracker` (guarded optional) |
-| Quick3D | Yes | `industries/games/kicker` (the 3D foosball table), `framework-tour/10-custom-rendering-and-xr` |
-| Quick3D Physics | Yes (guarded) | `framework-tour/10-custom-rendering-and-xr/quick3d-physics-xr` |
+| Graphs | Yes (guarded) | `framework-tour/09-latest-qt-release-features` (Qt 6.11+ only), `showcases/stock-tracker` (guarded optional), `industries/factory/offboard-digital-twin-control-center` (guarded optional 2D+3D charts) |
+| Quick3D | Yes | `industries/games/kicker` (the 3D foosball table), `framework-tour/10-custom-rendering-and-xr`, `industries/factory/offboard-digital-twin-control-center` (procedural PBR factory scene + `View3D::pick`) |
+| Quick3D Particles | Yes | `industries/factory/offboard-digital-twin-control-center` (`QtQuick3D.Particles3D` heat-shimmer effect around an overheating machine) |
+| Quick3D Physics | Yes (guarded) | `framework-tour/10-custom-rendering-and-xr/quick3d-physics-xr`, `industries/factory/offboard-digital-twin-control-center` (guarded optional; not present in this repo's local Qt 6.4.2 baseline, so the exploded-view effect actually shipped there is a procedural `NumberAnimation` instead) |
 | Quick3D Xr | Documented only | Same module; `XrMain.qml` exists and is doc-verified real, but is not built/run anywhere (needs XR hardware) |
+| Quick Timeline | Yes | `industries/factory/offboard-digital-twin-control-center` (authored camera fly-to keyframe animation via `Timeline`/`TimelineAnimation`/`KeyframeGroup`) - genuinely present and unconditionally linked in this repo's local Qt 6.4.2 baseline, unlike Graphs/Quick3DPhysics; this is also a **licensing-relevant finding**: Qt Quick Timeline's own documentation states "Commercial or GPLv3", the same no-LGPL-tier shape as Qt Graphs — see `docs/qa/licensing.md`. |
 | WebSockets | Yes (guarded) | `showcases/stock-tracker` (guarded optional; falls back to an in-process feed on older Qt) |
+| Mqtt | Attempted, not linked | `industries/factory/offboard-digital-twin-control-center` attempts `Qt6::Mqtt` (`QMqttClient`, real API verified via Qt Documentation MCP); not present in this repo's local Qt 6.4.2 baseline, and even where present QtMqtt ships only a client with no embedded broker, so the app's telemetry source is a plain in-process C++ signal/slot simulator either way - a real gap for anyone wanting to see this repo's actual MQTT wire protocol in action. |
+| TaskTree | Attempted, not linked | `industries/factory/offboard-digital-twin-control-center` attempts `Qt6::TaskTree` (`QtTaskTree::Group`/`Do`/`ExecutableItem`, real API, but Qt 6.11 Technology Preview); its maintenance workflow uses a hand-rolled `QStateMachine` instead. |
 | ShaderTools / private Gui RHI | Yes (guarded) | `framework-tour/10-custom-rendering-and-xr/rhi-under-qml` |
 | Qt.labs.lottieqt (Lottie) | Yes | `showcases/stock-tracker` (an order-filled confirmation animation) |
 
@@ -76,6 +80,17 @@ here — listed plainly rather than omitted silently:
 - **Undo framework** (`QUndoStack`/`QUndoCommand`) — no app demonstrates
   undo/redo, even though `framework-tour/06-sql-persistence`'s task editor
   or the home-automation wall panel would be natural fits.
+- **Qt LabsStyleKit** — `industries/factory/offboard-digital-twin-control-center`
+  attempted this first for its theme switcher; a Qt Documentation MCP
+  search for "LabsStyleKit" returned zero results, so no genuine public
+  QML API could be confirmed (matching the note in this repo's own
+  requirements about only private headers having been seen locally at the
+  time of writing). The app uses a plain hand-written QML `Theme` singleton
+  instead rather than guess at an unconfirmed API.
+- **Qt Canvas Painter** — also attempted for the same app's charts; no
+  module by that name could be found via Qt Documentation MCP search
+  either. The charts use Qt Graphs (guarded) or plain QtQuick
+  `Canvas`/`Context2D` instead.
 
 ## Deliberately excluded, not a gap
 
