@@ -1,0 +1,6 @@
+add_subdirectory(common)
+add_subdirectory(schafkopf)
+add_subdirectory(maumau)
+add_subdirectory(watten)
+add_subdirectory(skat)
+add_subdirectory(kicker)

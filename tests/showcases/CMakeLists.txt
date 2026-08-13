@@ -1,1 +1,3 @@
-# Individual showcases' test directories are added here as they are built.
+add_subdirectory(news-ticker)
+add_subdirectory(stock-tracker)
+add_subdirectory(startrek-bridge)

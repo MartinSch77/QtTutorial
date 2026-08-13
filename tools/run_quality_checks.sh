@@ -2,14 +2,21 @@
 #
 # Local quality gate a contributor can run before opening a PR. Mirrors (a
 # scaled-down, open-source-only subset of) the checks the CI workflows under
-# .github/workflows/ run: configure+build, ctest, cppcheck, clang-tidy, and
-# the requirements traceability report.
+# .github/workflows/ run: configure+build, ctest, cppcheck, clang-tidy,
+# qmllint, codespell, the complexity ratchet, and the requirements
+# traceability report.
 #
 # Does NOT run sanitizer or coverage builds (those use different CMake
-# configure flags than a normal Debug build) or clazy (needs a compile
+# configure flags than a normal Debug build), clazy (needs a compile
 # database the same as clang-tidy but is left out here to keep a local run
-# fast; see .github/workflows/static-analysis.yml for that one). Run those
-# separately if you're touching sanitizer- or coverage-sensitive code.
+# fast), Clang Static Analyzer / scan-build (wraps its own configure+build,
+# slow), g++ -fanalyzer (its own separate build, slow), PMD CPD (needs a
+# separate Java+PMD download, not assumed to be present locally), TSan, or
+# valgrind. All of those are CI-only — see
+# .github/workflows/static-analysis.yml and
+# .github/workflows/sanitizers.yml for them. Run those separately (or let CI
+# run them) if you're touching sanitizer-, coverage-, clone-, or
+# analyzer-sensitive code.
 #
 # Usage: tools/run_quality_checks.sh [build-dir]
 #   build-dir defaults to "build" under the repo root.
@@ -106,6 +113,44 @@ run_clang_tidy() {
     fi
 }
 
+run_qmllint() {
+    if ! command -v qmllint >/dev/null 2>&1; then
+        echo "qmllint not found on PATH, skipping." >&2
+        return 0
+    fi
+    local failed=0
+    while IFS= read -r -d '' qml; do
+        qmllint "${qml}" || failed=1
+    done < <(find "${REPO_ROOT}/framework-tour" "${REPO_ROOT}/industries" "${REPO_ROOT}/showcases" \
+                  -name '*.qml' -print0 2>/dev/null)
+    return "${failed}"
+}
+
+run_codespell() {
+    if ! command -v codespell >/dev/null 2>&1; then
+        echo "codespell not found on PATH, skipping." >&2
+        return 0
+    fi
+    # -L excludes words verified to be real domain terms, not typos -- see
+    # the matching codespell step in .github/workflows/static-analysis.yml
+    # for what each one is and why.
+    codespell \
+        --skip="build,*.svg,*.png,*.jpg,*.ico,*.qrc,*.pro.user,.git" \
+        -L unter,covert,hsi,invokable \
+        "${REPO_ROOT}/framework-tour" "${REPO_ROOT}/industries" "${REPO_ROOT}/showcases" \
+        "${REPO_ROOT}/docs" "${REPO_ROOT}/tools" "${REPO_ROOT}/requirements" \
+        "${REPO_ROOT}/tool-configs" \
+        "${REPO_ROOT}/README.md" "${REPO_ROOT}/CONTRIBUTING.md" "${REPO_ROOT}/SECURITY.md"
+}
+
+run_complexity_ratchet() {
+    if ! command -v lizard >/dev/null 2>&1; then
+        echo "lizard not found on PATH (pip install lizard), skipping complexity ratchet." >&2
+        return 0
+    fi
+    python3 "${REPO_ROOT}/tools/complexity_ratchet.py"
+}
+
 run_trace_report() {
     python3 "${REPO_ROOT}/tools/trace_report.py"
 }
@@ -115,11 +160,15 @@ run_step "build" build
 run_step "ctest" run_ctest
 run_step "cppcheck" run_cppcheck
 run_step "clang-tidy" run_clang_tidy
+run_step "qmllint" run_qmllint
+run_step "codespell" run_codespell
+run_step "complexity_ratchet" run_complexity_ratchet
 run_step "trace_report" run_trace_report
 
 echo ""
 echo "===================== Quality Check Summary ====================="
-for name in "configure" "build" "ctest" "cppcheck" "clang-tidy" "trace_report"; do
+for name in "configure" "build" "ctest" "cppcheck" "clang-tidy" "qmllint" \
+    "codespell" "complexity_ratchet" "trace_report"; do
     printf "  %-14s %s\n" "${name}" "${STEP_STATUS[${name}]:-SKIPPED}"
 done
 echo "===================================================================="

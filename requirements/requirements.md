@@ -39,7 +39,10 @@ been reviewed.
 ## Industry showcase requirements
 
 - **REQ-IND-01**: Each directory under `industries/` provides exactly one
-  `onboard-*` example and exactly one `offboard-*` example.
+  `onboard-*` example and exactly one `offboard-*` example, **except**
+  `industries/games/`, which is a games category living under
+  `industries/` per REQ-GAME-01 and is exempt from the onboard/offboard
+  split (see that requirement instead).
 - **REQ-IND-02**: Each `industries/<industry>/onboard-*` and
   `industries/<industry>/offboard-*` example has its own `CMakeLists.txt`
   and builds as part of the top-level `industries` target when
@@ -94,12 +97,64 @@ been reviewed.
   not executed in this repo's CI, with a pointer to
   https://github.com/MartinSch77/TradingApp as the reference implementation
   that runs all four for real.
+- **REQ-QA-08**: Clang Static Analyzer (`scan-build`) runs against a
+  configure+build of the repo in CI (`.github/workflows/static-analysis.yml`,
+  `clang-static-analyzer` job), in informational (non-blocking) mode, with
+  its HTML report uploaded as a build artifact.
+- **REQ-QA-09**: `g++ -fanalyzer` runs as a separate build in CI
+  (`.github/workflows/static-analysis.yml`, `gcc-fanalyzer` job), in
+  informational (non-blocking) mode, kept as its own build rather than added
+  to the default warning flags in `cmake/QtTutorialWarnings.cmake` so its
+  extra compile-time cost doesn't land on every push/PR's main build.
+- **REQ-QA-10**: PMD CPD (clone/duplication detection) runs across
+  `framework-tour/`, `industries/`, `industries/games/` and `showcases/` in CI
+  (`.github/workflows/static-analysis.yml`, `pmd-cpd` job), in informational
+  (non-blocking) mode.
+- **REQ-QA-11**: `qmllint` runs against every `.qml` file found anywhere
+  under `framework-tour/`, `industries/`, `industries/games/` and `showcases/` (found
+  generically via `find`, never a hardcoded file list, so it keeps covering
+  new QML files as they're added) in CI
+  (`.github/workflows/static-analysis.yml`, `qmllint` job) and, when
+  `qmllint` is present on PATH, in `tools/run_quality_checks.sh`, in
+  informational (non-blocking) mode.
+- **REQ-QA-12**: `codespell` runs across `framework-tour/`, `industries/`,
+  `industries/games/`, `showcases/`, `docs/`, `tools/`, `requirements/`, `tool-configs/`
+  and the repo's top-level markdown files in CI
+  (`.github/workflows/static-analysis.yml`, `codespell` job) and in
+  `tools/run_quality_checks.sh`, in informational (non-blocking) mode, with
+  an explicit, documented `-L` ignore list limited to verified real domain
+  terms (not a blanket suppression).
+- **REQ-QA-13**: ThreadSanitizer (TSan) runs the full test suite in CI
+  (`.github/workflows/sanitizers.yml`, `tsan` job) via a dedicated
+  `QTTUTORIAL_ENABLE_TSAN` CMake option (`cmake/QtTutorialSanitizers.cmake`),
+  which is mutually exclusive with `QTTUTORIAL_ENABLE_SANITIZERS`
+  (ASan+UBSan) and fails the CMake configure step with a clear error if both
+  are enabled at once, since ASan and TSan instrumentation cannot be
+  combined in the same binary.
+- **REQ-QA-14**: `valgrind --tool=memcheck` runs the full test suite (with
+  `--trace-children=yes` so ctest's spawned test binaries are actually
+  instrumented, not just the `ctest` process itself) in CI
+  (`.github/workflows/sanitizers.yml`, `valgrind-memcheck` job) against a
+  plain, uninstrumented Debug build, and fails the job
+  (`--error-exitcode=1`) on any memcheck finding.
+- **REQ-QA-15**: `tools/complexity_ratchet.py` measures per-function
+  cyclomatic complexity (via `lizard`) across `framework-tour/`,
+  `industries/` (including `industries/games/`) and `showcases/`, fails if any function's
+  complexity is not already recorded in `tools/complexity_baseline.json` at
+  that value or higher (new or worsened debt), and passes existing debt
+  recorded in the baseline through unchanged — this is the one static-check
+  job in `.github/workflows/static-analysis.yml`
+  (`complexity-ratchet`) that is NOT `continue-on-error`, since it is
+  designed to actually gate merges, mirroring TradingApp's documented
+  complexity-ratchet philosophy.
 
 ## Games requirements
 
-- **REQ-GAME-01**: Every `games/<name>/` game has its own `CMakeLists.txt`
-  and builds as part of the top-level `games` target when
-  `QTTUTORIAL_BUILD_GAMES` is `ON`. `games/common/` is the shared LAN
+- **REQ-GAME-01**: Every `industries/games/<name>/` game has its own
+  `CMakeLists.txt` and builds when `QTTUTORIAL_BUILD_GAMES` is `ON` (via
+  `industries/CMakeLists.txt` when industries are built, since games live
+  under `industries/` as a vertical without the onboard/offboard split).
+  `industries/games/common/` is the shared LAN
   transport (`games_common_lib`: `TableMessage`, `TableServer`,
   `TableClient`, `LanBeacon`, `LanAdvertiser`, `LanBrowser`) every game
   builds on; it is not itself a playable game and is exempt from
@@ -109,7 +164,7 @@ been reviewed.
   library target, independent of both the UI and the network transport.
 - **REQ-GAME-03**: Each game's non-UI logic is covered by at least one
   QTest test executable registered with `ctest` under
-  `tests/games/<name>/`.
+  `tests/industries/games/<name>/`.
 - **REQ-GAME-04**: Each game supports 2-4 players over a LAN, one instance
   hosting via `TableServer` and the others joining via `TableClient`, and
   documents its own message protocol (the game-specific `type`/`payload`

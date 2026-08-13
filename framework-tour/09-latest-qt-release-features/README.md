@@ -20,12 +20,19 @@ restatement of older Qt Graphs functionality.
 **GPL-3.0-or-later**, not MIT. See [`NOTICE.md`](NOTICE.md) for why — in
 short, Qt Graphs is GPLv3-or-commercial only, with no LGPL option.
 
-This module only builds if Qt Graphs is available (Qt >= 6.9, roughly). The
-locally installed Qt 6.4.2 used to develop the rest of this repository does
-not have it, so `framework-tour/09-latest-qt-release-features/CMakeLists.txt`
-guards the whole module behind `find_package(Qt6 COMPONENTS Graphs)` and
-`if(TARGET Qt6::Graphs)`, and simply skips it — with a `message(STATUS ...)`
-— rather than failing the repository's configure step.
+This module only builds against Qt 6.11+. Qt Graphs itself exists from 6.9,
+but the `LineSeries.strokeStyle`/`dashPattern`/`dashOffset`/`joinStyle`
+properties this module specifically uses (see §5 of the tutorial doc) were
+only added in 6.11 — a plain "is Qt6::Graphs present" check is not enough,
+confirmed the hard way by actually running this module against a real Qt
+6.10.2 install: it configured and built fine, then failed at QML load time
+with `Cannot assign to non-existent property "joinStyle"`. So
+`framework-tour/09-latest-qt-release-features/CMakeLists.txt` checks
+`Qt6_VERSION VERSION_LESS "6.11.0"` explicitly, not just
+`if(TARGET Qt6::Graphs)`, and skips with a `message(STATUS ...)` — rather
+than failing the repository's configure step — on anything older, including
+both the 6.4.2 install used to develop the rest of this repository and a
+6.9/6.10 install that has Qt Graphs but not yet these specific properties.
 
 ## What it demonstrates
 

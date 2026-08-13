@@ -4,14 +4,18 @@
 Walks the repo tree looking for:
   - framework-tour/<name>/            (every immediate subdirectory)
   - industries/<industry>/{onboard,offboard}-<name>/
-  - games/<name>/                     (every immediate subdirectory, incl. "common")
+  - industries/games/<name>/          (every immediate subdirectory, incl. "common") --
+    games live under industries/ because a LAN card/kicker game is, structurally,
+    just another vertical here: it doesn't follow the onboard/offboard split the
+    other industries use, so it's handled by its own finder function below
+    rather than being forced into that pattern.
   - showcases/<name>/                 (every immediate subdirectory)
 
 For each one found, checks whether a matching test directory containing a
 CMakeLists.txt exists:
   - tests/framework-tour/<name>/CMakeLists.txt
   - tests/industries/<industry>/<name>/CMakeLists.txt
-  - tests/games/<name>/CMakeLists.txt
+  - tests/industries/games/<name>/CMakeLists.txt
   - tests/showcases/<name>/CMakeLists.txt
 
 Writes a markdown traceability table to docs/qa/traceability.md mapping each
@@ -40,16 +44,16 @@ from pathlib import Path
 REPO_ROOT = Path(__file__).resolve().parent.parent
 FRAMEWORK_TOUR_DIR = REPO_ROOT / "framework-tour"
 INDUSTRIES_DIR = REPO_ROOT / "industries"
-GAMES_DIR = REPO_ROOT / "games"
+GAMES_DIR = INDUSTRIES_DIR / "games"
 SHOWCASES_DIR = REPO_ROOT / "showcases"
 TESTS_DIR = REPO_ROOT / "tests"
 OUTPUT_PATH = REPO_ROOT / "docs" / "qa" / "traceability.md"
 
 # Non-module files/dirs that can legitimately sit alongside real modules at
-# the framework-tour/, industries/<industry>/, games/, and showcases/ top
-# levels.
+# the framework-tour/, industries/<industry>/, industries/games/, and
+# showcases/ top levels.
 FRAMEWORK_TOUR_IGNORE = {"CMakeLists.txt"}
-INDUSTRY_IGNORE = {"CMakeLists.txt"}
+INDUSTRY_IGNORE = {"CMakeLists.txt", "games"}
 GAMES_IGNORE = {"CMakeLists.txt"}
 SHOWCASES_IGNORE = {"CMakeLists.txt"}
 
@@ -132,8 +136,8 @@ def find_games_entries() -> list[Entry]:
         entries.append(
             Entry(
                 category="games",
-                display_name=f"games/{name}",
-                test_dir=TESTS_DIR / "games" / name,
+                display_name=f"industries/games/{name}",
+                test_dir=TESTS_DIR / "industries" / "games" / name,
                 req_ids=["REQ-GAME-02", "REQ-GAME-03"],
             )
         )

@@ -6,6 +6,19 @@ if(NOT TARGET Qt6::Graphs)
     return()
 endif()
 
+# This module deliberately uses LineSeries.strokeStyle/dashPattern/dashOffset/
+# joinStyle, which are new *in* Qt 6.11 (not merely "supported as of" it --
+# see the README/tutorial doc for why that distinction is the whole point of
+# this module). Qt Graphs itself exists from 6.9, so the plain TARGET check
+# above is not sufficient: against 6.9/6.10 it configures fine but fails at
+# QML load time with "Cannot assign to non-existent property" -- confirmed by
+# actually running this module against a real Qt 6.10.2 install. Require
+# 6.11+ explicitly instead of only checking that the Graphs target exists.
+if(Qt6_VERSION VERSION_LESS "6.11.0")
+    message(STATUS "Qt ${Qt6_VERSION} has Qt6::Graphs but not the 6.11+ LineSeries dash/join properties this module uses - skipping framework-tour/09-latest-qt-release-features")
+    return()
+endif()
+
 add_library(graphs_showcase_lib STATIC
     src/TelemetryGenerator.h
     src/TelemetryGenerator.cpp

@@ -1,0 +1,38 @@
+{
+  "projectName": "QtTutorial",
+  "buildSystem": "cmake",
+  "buildDirectory": "build",
+  "buildCommand": "cmake --build build",
+  "sourceRoots": ["framework-tour", "industries", "showcases"],
+  "architecture": {
+    "description": "Layering rules Axivion would enforce as architecture-as-code (see docs/qa/licensed-tools.md). Not evaluated by this repo's CI -- no Axivion license here.",
+    "components": [
+      { "name": "framework-tour", "path": "framework-tour/**" },
+      { "name": "industries.onboard", "path": "industries/*/onboard-*/**" },
+      { "name": "industries.offboard", "path": "industries/*/offboard-*/**" },
+      { "name": "games.common", "path": "industries/games/common/**" },
+      { "name": "games.title", "path": "industries/games/*/**", "excludes": ["industries/games/common/**"] },
+      { "name": "showcases", "path": "showcases/**" }
+    ],
+    "rules": [
+      {
+        "id": "onboard-no-network-or-sql",
+        "description": "Onboard examples model embedded targets: they must not depend on QtNetwork or QtSql, which is what actually separates them from their offboard sibling.",
+        "from": "industries.onboard",
+        "forbiddenQtModules": ["Network", "Sql"]
+      },
+      {
+        "id": "games-depend-only-on-common",
+        "description": "A game may depend on games.common for LAN transport, but never on another game's directory, and not on any other industries.* component even though it now lives under industries/ -- it is structurally its own vertical, just without the onboard/offboard split.",
+        "from": "games.title",
+        "allowed": ["games.common"]
+      },
+      {
+        "id": "showcases-standalone",
+        "description": "Showcases are general-purpose demos: no dependency on industries/ (including industries/games/) at all.",
+        "from": "showcases",
+        "forbidden": ["industries.onboard", "industries.offboard", "games.common", "games.title"]
+      }
+    ]
+  }
+}

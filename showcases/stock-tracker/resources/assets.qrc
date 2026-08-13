@@ -1,0 +1,6 @@
+<RCC>
+    <qresource prefix="/stock_tracker">
+        <file alias="icons/feed-status.svg">icons/feed-status.svg</file>
+        <file alias="lottie/order-filled.json">lottie/order-filled.json</file>
+    </qresource>
+</RCC>

@@ -58,10 +58,10 @@ Axivion schema — see TradingApp's actual `.axivion` setup for the real
 thing.
 
 **A real, checked-in illustrative config file** (not just the snippet
-above) lives at [`qa-configs/axivion/axivion_config.json`](../../qa-configs/axivion/axivion_config.json),
-extended to also cover the `games/` and `showcases/` categories added
+above) lives at [`tool-configs/axivion/axivion_config.json`](../../tool-configs/axivion/axivion_config.json),
+extended to also cover the `industries/games/` and `showcases/` categories added
 after this document was first written — see
-[`qa-configs/axivion/README.md`](../../qa-configs/axivion/README.md).
+[`tool-configs/axivion/README.md`](../../tool-configs/axivion/README.md).
 
 ---
 
@@ -102,10 +102,10 @@ def main():
 ```
 
 **A real, checked-in Squish Test Suite skeleton** lives at
-[`qa-configs/squish/example_suite/`](../../qa-configs/squish/example_suite/)
+[`tool-configs/squish/example_suite/`](../../tool-configs/squish/example_suite/)
 (a genuine `suite.conf` + test-case directory shape, not just a snippet) —
-see [`qa-configs/squish/README.md`](../../qa-configs/squish/README.md) for
-how to point it at any app in `framework-tour/`, `industries/`, or `games/`.
+see [`tool-configs/squish/README.md`](../../tool-configs/squish/README.md) for
+how to point it at any app in `framework-tour/`, `industries/`, or `industries/games/`.
 
 ---
 
@@ -139,10 +139,10 @@ documented CLI shape; treat this as a sketch of the invocation, not a tested
 command line, since Coco is not present in this sandbox.
 
 **A real, checked-in illustrative build script** lives at
-[`qa-configs/coco/coco_build_example.sh`](../../qa-configs/coco/coco_build_example.sh)
+[`tool-configs/coco/coco_build_example.sh`](../../tool-configs/coco/coco_build_example.sh)
 (configures and builds *this actual CMake project* with Coco's instrumenting
 compiler wrappers, then runs `csreport`) — see
-[`qa-configs/coco/README.md`](../../qa-configs/coco/README.md).
+[`tool-configs/coco/README.md`](../../tool-configs/coco/README.md).
 
 ---
 
@@ -180,7 +180,7 @@ reporting:
 
 | Tool               | Role in this repo (if licensed)                          | Open-source stand-in actually used |
 |---------------------|------------------------------------------------------------|-------------------------------------|
-| Axivion Suite       | Architecture rules (onboard/offboard split), MISRA/CERT, clone/complexity ratchet | cppcheck, clang-tidy, clazy (`.github/workflows/static-analysis.yml`) — no clone-detection or complexity ratchet tool is wired up in this repo yet |
+| Axivion Suite       | Architecture rules (onboard/offboard split), MISRA/CERT, clone/complexity ratchet | cppcheck, clang-tidy, clazy, Clang Static Analyzer, `g++ -fanalyzer`, PMD CPD (clone detection) and `tools/complexity_ratchet.py` (lizard-based cyclomatic-complexity ratchet) — see `.github/workflows/static-analysis.yml`. Still missing: Axivion's architecture-rule enforcement (the onboard/offboard dependency rules) and its MISRA C++ / CERT C++ rule sets specifically |
 | Squish for Qt       | GUI-level smoke tests                                       | None — no GUI-level smoke tests exist yet in this repo |
 | Squish Coco         | MC/DC coverage                                               | gcovr line/branch/decision coverage only (`docs/qa/coverage`) |
 | Qt Test Center      | Headless test execution + reporting dashboard                | `tools/trace_report.py` (plain markdown table) |

@@ -1,4 +1,6 @@
 add_subdirectory(framework-tour)
 add_subdirectory(industries)
-add_subdirectory(games)
+if(QTTUTORIAL_BUILD_GAMES AND NOT QTTUTORIAL_BUILD_INDUSTRIES)
+    add_subdirectory(industries/games games-only-build)
+endif()
 add_subdirectory(showcases)

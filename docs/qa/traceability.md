@@ -15,17 +15,37 @@ framework-tour module or industry example.
 | `framework-tour/07-state-machine` | yes | REQ-FW-03, REQ-FW-04 |
 | `framework-tour/08-serial-and-devices` | yes | REQ-FW-03, REQ-FW-04 |
 | `framework-tour/09-latest-qt-release-features` | yes | REQ-FW-03, REQ-FW-04 |
+| `framework-tour/10-custom-rendering-and-xr` | yes | REQ-FW-03, REQ-FW-04 |
+| `industries/agriculture/offboard-farm-operations-dashboard` | yes | REQ-IND-02, REQ-IND-03, REQ-IND-05 |
+| `industries/agriculture/onboard-tractor-console` | yes | REQ-IND-02, REQ-IND-03, REQ-IND-04 |
 | `industries/automotive/offboard-fleet-dashboard` | yes | REQ-IND-02, REQ-IND-03, REQ-IND-05 |
 | `industries/automotive/onboard-instrument-cluster` | yes | REQ-IND-02, REQ-IND-03, REQ-IND-04 |
 | `industries/avionics/offboard-fleet-maintenance` | yes | REQ-IND-02, REQ-IND-03, REQ-IND-05 |
 | `industries/avionics/onboard-primary-flight-display` | yes | REQ-IND-02, REQ-IND-03, REQ-IND-04 |
+| `industries/defence/offboard-central-command` | yes | REQ-IND-02, REQ-IND-03, REQ-IND-05 |
+| `industries/defence/onboard-multi-platform-hmi` | yes | REQ-IND-02, REQ-IND-03, REQ-IND-04 |
+| `industries/home-automation/offboard-remote-access-app` | yes | REQ-IND-02, REQ-IND-03, REQ-IND-05 |
+| `industries/home-automation/onboard-wall-panel` | yes | REQ-IND-02, REQ-IND-03, REQ-IND-04 |
 | `industries/industrial-automation/offboard-plant-scada` | yes | REQ-IND-02, REQ-IND-03, REQ-IND-05 |
 | `industries/industrial-automation/onboard-hmi-panel` | yes | REQ-IND-02, REQ-IND-03, REQ-IND-04 |
 | `industries/medical/offboard-telehealth-dashboard` | yes | REQ-IND-02, REQ-IND-03, REQ-IND-05 |
 | `industries/medical/onboard-patient-monitor` | yes | REQ-IND-02, REQ-IND-03, REQ-IND-04 |
+| `industries/mining/offboard-pit-operations-dashboard` | yes | REQ-IND-02, REQ-IND-03, REQ-IND-05 |
+| `industries/mining/onboard-haul-truck-console` | yes | REQ-IND-02, REQ-IND-03, REQ-IND-04 |
 | `industries/railway/offboard-fleet-ops-center` | yes | REQ-IND-02, REQ-IND-03, REQ-IND-05 |
 | `industries/railway/onboard-cab-display` | yes | REQ-IND-02, REQ-IND-03, REQ-IND-04 |
 | `industries/space/offboard-mission-control` | yes | REQ-IND-02, REQ-IND-03, REQ-IND-05 |
 | `industries/space/onboard-satellite-telemetry` | yes | REQ-IND-02, REQ-IND-03, REQ-IND-04 |
+| `industries/two-wheelers/offboard-fleet-dashboard` | yes | REQ-IND-02, REQ-IND-03, REQ-IND-05 |
+| `industries/two-wheelers/onboard-rider-dashboard` | yes | REQ-IND-02, REQ-IND-03, REQ-IND-04 |
+| `industries/games/common` | yes | REQ-GAME-02, REQ-GAME-03 |
+| `industries/games/kicker` | yes | REQ-GAME-02, REQ-GAME-03 |
+| `industries/games/maumau` | yes | REQ-GAME-02, REQ-GAME-03 |
+| `industries/games/schafkopf` | yes | REQ-GAME-02, REQ-GAME-03 |
+| `industries/games/skat` | yes | REQ-GAME-02, REQ-GAME-03 |
+| `industries/games/watten` | yes | REQ-GAME-02, REQ-GAME-03 |
+| `showcases/news-ticker` | yes | REQ-SHOWCASE-01, REQ-SHOWCASE-02 |
+| `showcases/startrek-bridge` | yes | REQ-SHOWCASE-01, REQ-SHOWCASE-02 |
+| `showcases/stock-tracker` | yes | REQ-SHOWCASE-01, REQ-SHOWCASE-02 |
 
-All 21 module(s)/example(s) have a matching test directory with a CMakeLists.txt.
+All 41 module(s)/example(s) have a matching test directory with a CMakeLists.txt.

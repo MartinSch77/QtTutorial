@@ -6,12 +6,25 @@ name: Sanitizers
 # it catches memory errors and undefined behavior that plain unit tests
 # running clean under a normal build would miss.
 #
-# TSan and valgrind are intentionally not wired up as separate jobs yet:
-# this repo has no multi-threaded framework-tour/industries code at present
-# to make a TSan run meaningful, and QtTutorialSanitizers.cmake only exposes
-# a single ASan+UBSan toggle. Add a TSan job here (and a corresponding
-# cmake option, if/when the sanitizer helper gains one) once concurrency
-# examples land under framework-tour/05-concurrency-async or similar.
+# TSan (ThreadSanitizer) and valgrind (memcheck) are now wired up as their
+# own jobs below, now that there is real multi-threaded code to make a TSan
+# run meaningful: framework-tour/05-concurrency-async uses std::jthread
+# (see its JThreadWorker), and industries/games/kicker runs a real-time simulation
+# loop with its own worker thread(s).
+#
+# TSan gets a dedicated CMake toggle, QTTUTORIAL_ENABLE_TSAN (see
+# cmake/QtTutorialSanitizers.cmake), rather than folding into
+# QTTUTORIAL_ENABLE_SANITIZERS above -- ASan and TSan instrument the
+# allocator/runtime in incompatible ways and `-fsanitize=address` /
+# `-fsanitize=thread` cannot be combined in the same binary (a documented
+# Clang/GCC restriction). QtTutorialSanitizers.cmake enforces this with a
+# FATAL_ERROR if both options are turned on at once.
+#
+# valgrind's `--error-exitcode=1` flag was verified locally
+# (`valgrind --help`, "user options for Valgrind tools that report
+# errors"). valgrind itself is installed locally (`which valgrind` finds
+# /usr/bin/valgrind), so the memcheck job below reflects a real local
+# install, not just a `--help` read.
 on:
   push:
     branches: [main]
@@ -60,3 +73,93 @@ jobs:
       - name: Test under ASan+UBSan
         working-directory: build
         run: ctest --output-on-failure
+
+  tsan:
+    name: ThreadSanitizer
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Install Qt
+        uses: jurplel/install-qt-action@v4
+        with:
+          version: ${{ env.QT_VERSION }}
+          modules: ${{ env.QT_MODULES }}
+          cache: true
+
+      - name: Configure
+        run: >
+          cmake -S . -B build-tsan
+          -DCMAKE_BUILD_TYPE=Debug
+          -DQTTUTORIAL_ENABLE_TSAN=ON
+
+      - name: Build
+        # Same 2-parallel cap as the ASan+UBSan job above, for the same
+        # per-TU memory reason (TSan instrumentation is at least as heavy
+        # as ASan's).
+        run: cmake --build build-tsan --parallel 2
+
+      - name: Test under ThreadSanitizer
+        working-directory: build-tsan
+        env:
+          # halt_on_error/history_size are documented TSan runtime options;
+          # kept consistent in spirit with the ASAN_OPTIONS/UBSAN_OPTIONS
+          # above (fail loud on the first real data race rather than
+          # collecting and continuing).
+          TSAN_OPTIONS: "halt_on_error=1"
+        run: ctest --output-on-failure
+
+  valgrind-memcheck:
+    name: valgrind (memcheck)
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Install Qt
+        uses: jurplel/install-qt-action@v4
+        with:
+          version: ${{ env.QT_VERSION }}
+          modules: ${{ env.QT_MODULES }}
+          cache: true
+
+      - name: Install valgrind
+        run: sudo apt-get update && sudo apt-get install -y valgrind
+
+      - name: Configure (plain Debug build, no sanitizer instrumentation)
+        # valgrind and compiler sanitizers both instrument memory access and
+        # actively conflict if combined (ASan in particular installs its own
+        # allocator, which valgrind's memcheck cannot correctly shadow) --
+        # this is a genuinely separate, uninstrumented build, not a reuse of
+        # build/ or build-tsan/ above.
+        run: >
+          cmake -S . -B build-valgrind
+          -DCMAKE_BUILD_TYPE=Debug
+
+      - name: Build
+        run: cmake --build build-valgrind --parallel 2
+
+      # ctest's own built-in memcheck driver (`ctest -T MemCheck`) needs a
+      # MemoryCheckCommand configured via a CTestConfig/CTestCustom setup we
+      # don't have here, so this instead uses ctest's own
+      # `--overwrite MemoryCheckCommand=...`-free, simpler approach: run
+      # ctest itself under valgrind directly, which wraps the whole ctest
+      # process tree. `--error-exitcode=1` is real valgrind syntax (verified
+      # via `valgrind --help` locally, "user options for Valgrind tools that
+      # report errors" section) so this step naturally fails the job on any
+      # memcheck finding across any test binary ctest launches.
+      - name: Test suite under valgrind memcheck
+        # --trace-children=yes is required here (verified via `valgrind
+        # --help` locally, "basic user options" section): ctest itself
+        # forks a child process per test binary, and without this flag
+        # valgrind would only ever instrument the `ctest` process itself,
+        # never the actual QTest executables it launches.
+        working-directory: build-valgrind
+        run: >
+          valgrind
+          --error-exitcode=1
+          --leak-check=full
+          --track-origins=yes
+          --trace-children=yes
+          ctest --output-on-failure

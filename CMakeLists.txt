@@ -27,6 +27,7 @@ option(QTTUTORIAL_BUILD_GAMES "Build the games (LAN multiplayer card/kicker game
 option(QTTUTORIAL_BUILD_SHOWCASES "Build the general-purpose visual showcase apps" ON)
 option(QTTUTORIAL_BUILD_TESTS "Build unit tests" ON)
 option(QTTUTORIAL_ENABLE_SANITIZERS "Build with ASan+UBSan" OFF)
+option(QTTUTORIAL_ENABLE_TSAN "Build with ThreadSanitizer (mutually exclusive with QTTUTORIAL_ENABLE_SANITIZERS)" OFF)
 option(QTTUTORIAL_ENABLE_COVERAGE "Build with --coverage instrumentation" OFF)
 option(QTTUTORIAL_WARNINGS_AS_ERRORS "Treat compiler warnings as errors" OFF)
 
@@ -55,8 +56,11 @@ if(QTTUTORIAL_BUILD_INDUSTRIES)
     add_subdirectory(industries)
 endif()
 
-if(QTTUTORIAL_BUILD_GAMES)
-    add_subdirectory(games)
+if(QTTUTORIAL_BUILD_GAMES AND NOT QTTUTORIAL_BUILD_INDUSTRIES)
+    # industries/CMakeLists.txt only descends into industries/games/ when it
+    # runs; if industries as a whole are skipped but games specifically were
+    # requested, add just that subdirectory here instead.
+    add_subdirectory(industries/games games-only-build)
 endif()
 
 if(QTTUTORIAL_BUILD_SHOWCASES)

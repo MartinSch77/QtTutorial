@@ -1,6 +1,6 @@
 # Industry Showcases
 
-Six industries, each with exactly two example applications:
+Eleven industries, each with exactly two example applications:
 
 | Industry | Onboard | Offboard |
 |---|---|---|
@@ -10,6 +10,18 @@ Six industries, each with exactly two example applications:
 | [Railway](railway.md) | Cab display | Fleet ops center |
 | [Avionics](avionics.md) | Primary flight display | Fleet maintenance |
 | [Space](space.md) | Satellite telemetry | Mission control |
+| [Two-Wheelers](two-wheelers.md) | Rider dashboard | Fleet dashboard |
+| [Agriculture](agriculture.md) | Tractor console | Farm operations dashboard |
+| [Mining](mining.md) | Haul truck console | Pit operations dashboard |
+| [Home Automation](home-automation.md) | Wall panel | Remote access app |
+| [Defence](defence.md) | Multi-platform HMI | Central command |
+
+`industries/games/` is a twelfth entry under `industries/` structurally,
+but it's a different shape — one app per game, no onboard/offboard split,
+built on a shared LAN transport rather than each reinventing networking.
+See the top-level [README](../../README.md#games) for the games list; this
+page and its per-industry docs are specifically about the onboard/offboard
+industry pattern.
 
 ## The onboard / offboard split
 
@@ -38,6 +50,10 @@ These are technology demonstrations of Qt's reach across industries, built
 to be visually and functionally convincing to a non-technical audience while
 staying honest about what's simulated. They are **not** certified,
 compliance-audited, or production-ready software for any of these domains.
+[Defence](defence.md) specifically is a passive situational-awareness/
+command-and-control visualization showcase, with no weapons guidance,
+fire-control, or targeting logic anywhere — see that doc's explicit safety
+framing.
 Where a process or domain standard is named in a doc (ISO/IEC/IEEE 12207
 generically, ASPICE for automotive specifically, or informational mentions
 of DO-178C/ECSS/medical-device expectations), it is context, not a

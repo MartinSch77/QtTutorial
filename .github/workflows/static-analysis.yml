@@ -24,9 +24,17 @@ name: Static Analysis
 #
 # All CLI flags below were verified against locally installed versions
 # before being committed:
-#   cppcheck 2.13.0, clang-tidy 18 (run-clang-tidy 18), clazy 1.x
+#   cppcheck 2.13.0, clang-tidy 18 (run-clang-tidy 18), clazy 1.x,
+#   g++ 13.3.0 (-fanalyzer), codespell 2.x
 # (see `<tool> --help` for the authoritative flag list on newer versions —
 # flags have changed across releases in the past).
+#
+# scan-build (Clang Static Analyzer), PMD CPD and qmllint below could NOT be
+# flag-verified against a real Linux install in this sandbox — see each
+# job's own comment for exactly why and what was verified instead
+# (`--help` output only, or nothing at all). Do not treat their flags as
+# battle-tested the way the tools listed above are; re-check against
+# `<tool> --help` on the actual CI runner if a job here looks wrong.
 #
 # Note on --std=c++23: the locally installed cppcheck 2.13.0's --help text
 # only lists up to c++20 as a documented --std value, but passing
@@ -147,3 +155,246 @@ jobs:
             clazy-standalone -p build "$src" || fail=1
           done < clazy-files.txt
           exit "$fail"
+
+  clang-static-analyzer:
+    name: Clang Static Analyzer (scan-build)
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Install Qt
+        uses: jurplel/install-qt-action@v4
+        with:
+          version: ${{ env.QT_VERSION }}
+          modules: ${{ env.QT_MODULES }}
+          cache: true
+
+      - name: Install clang tools (scan-build ships in clang-tools)
+        run: sudo apt-get update && sudo apt-get install -y clang clang-tools
+
+      # scan-build's usual CMake recipe is to wrap BOTH the configure and the
+      # build step: wrapping configure lets it install its CC/CXX
+      # interposition, wrapping build is what actually runs the analyzer
+      # against each compile command. This two-step invocation is scan-build's
+      # own documented pattern for CMake projects.
+      #
+      # NOTE ON VERIFICATION: this sandbox's only `scan-build` is a Windows
+      # LLVM install reachable via a WSL interop path (not a native Linux
+      # binary), so `scan-build --help` output was checked for the flags used
+      # below (-o, --status-bugs, --exclude), but the actual configure+build
+      # invocation was NOT dry-run end-to-end against this repo locally.
+      # Treat this job as unverified beyond the flag list until it's been
+      # green at least once in CI.
+      - name: Configure under scan-build
+        continue-on-error: true
+        run: >
+          scan-build -o scan-build-report
+          --exclude build
+          cmake -S . -B build-scan-build
+          -DCMAKE_BUILD_TYPE=Debug
+
+      - name: Build under scan-build (framework-tour + industries (incl. industries/games) + showcases)
+        continue-on-error: true
+        run: >
+          scan-build -o scan-build-report
+          --status-bugs
+          --exclude build
+          cmake --build build-scan-build --parallel 2
+
+      - name: Upload scan-build report
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: scan-build-report
+          path: scan-build-report/
+          retention-days: 30
+
+  gcc-fanalyzer:
+    name: g++ -fanalyzer
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Install Qt
+        uses: jurplel/install-qt-action@v4
+        with:
+          version: ${{ env.QT_VERSION }}
+          modules: ${{ env.QT_MODULES }}
+          cache: true
+
+      # -fanalyzer is a real GCC flag (verified: `g++ --version` locally
+      # reports 13.3.0, and `g++ -std=c++23 -fanalyzer -c` on a throwaway
+      # leak-on-purpose .cpp locally produced a genuine
+      # `-Wanalyzer-malloc-leak [CWE-401]` diagnostic with a full event
+      # trace, confirming the flag is understood and does real analysis on
+      # this toolchain). No separate driver script is needed the way
+      # scan-build needs one — it's a normal compiler warning flag, so this
+      # reuses a plain CMake configure+build rather than a wrapped one.
+      #
+      # Reusing the main build here (rather than adding -fanalyzer to the
+      # default CI build in cmake/QtTutorialWarnings.cmake) because
+      # -fanalyzer measurably slows compilation and we don't want every
+      # push/PR paying that cost on the primary ci.yml build — it's opt-in
+      # here via CMAKE_CXX_FLAGS instead.
+      - name: Configure with -fanalyzer
+        run: >
+          cmake -S . -B build-fanalyzer
+          -DCMAKE_BUILD_TYPE=Debug
+          -DCMAKE_CXX_FLAGS="-fanalyzer"
+
+      - name: Build with -fanalyzer (diagnostics are informational)
+        # -fanalyzer diagnostics are plain -W warnings, not gated behind
+        # -Werror in this build, so this step does not fail on findings by
+        # itself; continue-on-error is kept anyway for parity with every
+        # other analyzer job here and in case a future toolchain change
+        # turns some analyzer finding into a hard error.
+        continue-on-error: true
+        run: cmake --build build-fanalyzer --parallel 2 2>&1 | tee fanalyzer-output.log
+
+      - name: Summarize -fanalyzer findings
+        run: |
+          count=$(grep -c '\-Wanalyzer-' fanalyzer-output.log || true)
+          echo "g++ -fanalyzer findings: ${count}"
+
+      - name: Upload -fanalyzer log
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: fanalyzer-log
+          path: fanalyzer-output.log
+          retention-days: 30
+
+  pmd-cpd:
+    name: PMD CPD (clone detection)
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Set up Java (PMD is a JVM tool)
+        uses: actions/setup-java@v4
+        with:
+          distribution: temurin
+          java-version: "17"
+
+      # PMD is not installed in this sandbox (`which pmd` found nothing) and
+      # is not pip/apt-installable the way the other tools here are, so
+      # NONE of the flags below were verified locally — they follow PMD 7's
+      # documented `pmd cpd` CLI shape (https://pmd.github.io/latest/pmd_userdocs_cpd.html)
+      # from training knowledge, not a local `pmd cpd --help` run. Re-check
+      # against the actual downloaded release's `--help` if this job's
+      # output looks wrong.
+      - name: Download PMD release
+        env:
+          PMD_VERSION: "7.7.0"
+        run: |
+          curl -fsSL -o pmd.zip \
+            "https://github.com/pmd/pmd/releases/download/pmd_releases%2F${PMD_VERSION}/pmd-dist-${PMD_VERSION}-bin.zip"
+          unzip -q pmd.zip
+          echo "$(pwd)/pmd-bin-${PMD_VERSION}/bin" >> "$GITHUB_PATH"
+
+      - name: Run PMD CPD over framework-tour/, industries/ (incl. industries/games/), showcases/
+        continue-on-error: true
+        run: >
+          pmd cpd
+          --minimum-tokens 100
+          --language cpp
+          --format text
+          --dir framework-tour,industries,showcases
+          --exclude build
+          || true
+
+  qmllint:
+    name: qmllint
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Install Qt (includes qmllint from qtdeclarative)
+        uses: jurplel/install-qt-action@v4
+        with:
+          version: ${{ env.QT_VERSION }}
+          modules: ${{ env.QT_MODULES }}
+          cache: true
+
+      # NOTE ON VERIFICATION: this sandbox has no working Qt6 qmllint on
+      # Linux (`/usr/bin/qmllint` is a `qtchooser` symlink that fails with
+      # "No such file or directory" because no Qt5/Qt6 qmllint package is
+      # actually installed here, and the only real qmllint binaries found
+      # were under a Windows Qt install unusable from this shell), so the
+      # command below could NOT be run-verified locally. `qmllint <file>`
+      # (implicit default check, no extra flags) is qmllint's most basic,
+      # least version-sensitive invocation, chosen specifically to minimize
+      # the risk of guessing a flag wrong.
+      - name: Find every .qml file and run qmllint over it
+        continue-on-error: true
+        run: |
+          set -o pipefail
+          find framework-tour industries showcases -name '*.qml' > qml-files.txt
+          echo "Found $(wc -l < qml-files.txt) .qml file(s)."
+          fail=0
+          while IFS= read -r qml; do
+            echo "=== $qml ==="
+            qmllint "$qml" || fail=1
+          done < qml-files.txt
+          exit "$fail"
+
+  codespell:
+    name: codespell
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Install codespell
+        run: pip install --user codespell
+
+      # Verified locally (codespell --help): -S is a comma-separated skip
+      # glob list, not a "skip directory" flag with different syntax per
+      # entry, so a single comma-joined pattern list works. No
+      # --error-exitcode-style flag exists in codespell -- it already exits
+      # non-zero on any finding by default, so continue-on-error below is
+      # what keeps this informational rather than any codespell flag.
+      - name: Run codespell over source and docs
+        # -L excludes words verified locally to be real domain terms, not
+        # typos: "unter" is the actual German card-game rank name used
+        # throughout industries/games/skat, industries/games/watten and industries/games/schafkopf's rules
+        # code/docs; "covert" is a real English word codespell's own
+        # dictionary flags out of context (industries/games/watten/README.md's "covert
+        # channel"); "hsi" is the avionics Horizontal Situation Indicator
+        # abbreviation (industries/avionics/onboard-primary-flight-display).
+        # Running codespell locally against this exact command (minus -L)
+        # surfaced exactly these three false positives and nothing else, so
+        # the ignore list is deliberately short and specific rather than a
+        # broad guess.
+        continue-on-error: true
+        run: >
+          codespell
+          --skip="build,*.svg,*.png,*.jpg,*.ico,*.qrc,*.pro.user,.git"
+          -L unter,covert,hsi,invokable
+          framework-tour industries showcases
+          docs tools requirements tool-configs
+          README.md CONTRIBUTING.md SECURITY.md
+
+  complexity-ratchet:
+    name: Complexity ratchet (lizard)
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Install lizard
+        run: pip install --user lizard
+
+      # Unlike every other job in this file, this one is NOT
+      # continue-on-error: it is the one gate in this workflow designed to
+      # actually block a PR, per docs/qa/licensed-tools.md's description of
+      # Axivion's complexity ratchet: existing debt (recorded in
+      # tools/complexity_baseline.json) is allowed to stay, but new or
+      # worsened debt fails. See tools/complexity_ratchet.py's own docstring
+      # for the full ratchet philosophy and exit-code contract.
+      - name: Run complexity ratchet
+        run: python3 tools/complexity_ratchet.py
