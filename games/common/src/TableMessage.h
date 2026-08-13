@@ -3,6 +3,7 @@
 
 #include <QByteArray>
 #include <QJsonObject>
+#include <QMetaType>
 #include <QString>
 
 #include <expected>
@@ -26,3 +27,5 @@ struct TableMessage {
 };
 
 } // namespace qttutorial::games::common
+
+Q_DECLARE_METATYPE(qttutorial::games::common::TableMessage)

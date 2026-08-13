@@ -95,6 +95,30 @@ been reviewed.
   https://github.com/MartinSch77/TradingApp as the reference implementation
   that runs all four for real.
 
+## Games requirements
+
+- **REQ-GAME-01**: Every `games/<name>/` game has its own `CMakeLists.txt`
+  and builds as part of the top-level `games` target when
+  `QTTUTORIAL_BUILD_GAMES` is `ON`. `games/common/` is the shared LAN
+  transport (`games_common_lib`: `TableMessage`, `TableServer`,
+  `TableClient`, `LanBeacon`, `LanAdvertiser`, `LanBrowser`) every game
+  builds on; it is not itself a playable game and is exempt from
+  REQ-GAME-04's "playable over LAN" requirement but not from REQ-GAME-02/03.
+- **REQ-GAME-02**: Each game's non-UI logic (rules, scoring, deck/card
+  representation, physics for the kicker game) lives in a separate static
+  library target, independent of both the UI and the network transport.
+- **REQ-GAME-03**: Each game's non-UI logic is covered by at least one
+  QTest test executable registered with `ctest` under
+  `tests/games/<name>/`.
+- **REQ-GAME-04**: Each game supports 2-4 players over a LAN, one instance
+  hosting via `TableServer` and the others joining via `TableClient`, and
+  documents its own message protocol (the game-specific `type`/`payload`
+  values it puts in `TableMessage`) in its README.
+- **REQ-GAME-05**: Each game's README states which real-world card/table
+  game (and, where the source game has significant regional rule variants,
+  *which* variant) it implements, so a player can check the digital rules
+  against the physical ones they know.
+
 ## Explicitly out of scope for this list
 
 This list does not attempt to specify the detailed functional behavior of
