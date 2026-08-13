@@ -110,17 +110,25 @@ Item {
             Keyframe { frame: 0; value: root.flyFromZ }
             Keyframe { frame: 100; value: root.flyToZ }
         }
-    }
-    TimelineAnimation {
-        id: cameraFlyAnimation
-        timeline: cameraFlyTimeline
-        duration: 900
-        from: 0
-        to: 100
-        easing.type: Easing.InOutCubic
-        onFinished: root.cameraMoved(camera.position, camera.eulerRotation)
 
-        function restart() { stop(); start(); }
+        // TimelineAnimation has no "timeline" property of its own - it is
+        // driven by whichever Timeline it is nested under via this
+        // "animations" list (confirmed against QtQuick.Timeline's own
+        // plugins.qmltypes: QQuickTimelineAnimation only adds "pingPong" on
+        // top of QQuickNumberAnimation, and QQuickTimeline's "animations" is
+        // a plain list property, not a back-reference the animation holds).
+        animations: [
+            TimelineAnimation {
+                id: cameraFlyAnimation
+                duration: 900
+                from: 0
+                to: 100
+                easing.type: Easing.InOutCubic
+                onFinished: root.cameraMoved(camera.position, camera.eulerRotation)
+
+                function restart() { stop(); start(); }
+            }
+        ]
     }
 
     // Orbit/zoom/pan: simple drag-to-orbit + wheel-to-zoom rig (a hand-rolled

@@ -112,6 +112,14 @@ endif()
 
 qt6_add_resources(OFFBOARD_DIGITAL_TWIN_ASSETS resources/assets.qrc)
 
+# qt_add_qml_module does NOT auto-detect "pragma Singleton" inside a .qml
+# file (confirmed by reading Qt6QmlMacros.cmake: qmldir generation only
+# emits the "singleton" keyword when the QT_QML_SINGLETON_TYPE source
+# property is set) - without this, Theme was registered as an ordinary
+# type, so every Theme.<property> read from other QML files silently
+# evaluated to undefined instead of erroring loudly.
+set_source_files_properties(qml/Theme.qml PROPERTIES QT_QML_SINGLETON_TYPE TRUE)
+
 qttutorial_add_app(offboard_digital_twin_control_center
     SOURCES
         src/main.cpp

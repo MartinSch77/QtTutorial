@@ -20,6 +20,13 @@ import QtTutorial.Factory.OffboardDigitalTwinControlCenter
 // Graphs (needs Qt >= 6.9), so this file could not itself be built or run in
 // this sandbox; ChartsFallback.qml is what actually renders here and on any
 // other pre-6.9 Qt install. See README.md.
+//
+// The three Connections blocks below are deliberately declared as children
+// of `root`, not nested inside GraphsView/Surface3D: both types' default
+// property is their series list (expecting only LineSeries/Surface3DSeries
+// children), so a nested Connections there fails to load with "Cannot
+// assign object ... to list property" - confirmed by actually building and
+// running this file against a complete local Qt install that has Qt Graphs.
 Item {
     id: root
 
@@ -42,14 +49,6 @@ Item {
                 id: vibrationSeries
                 name: qsTr("Vibration")
             }
-            Connections {
-                target: root
-                function onVibrationHistoryChanged() {
-                    vibrationSeries.clear();
-                    for (let i = 0; i < root.vibrationHistory.length; ++i)
-                        vibrationSeries.append(i, root.vibrationHistory[i]);
-                }
-            }
         }
 
         GraphsView {
@@ -62,14 +61,6 @@ Item {
             LineSeries {
                 id: temperatureSeries
                 name: qsTr("Temperature")
-            }
-            Connections {
-                target: root
-                function onTemperatureHistoryChanged() {
-                    temperatureSeries.clear();
-                    for (let i = 0; i < root.temperatureHistory.length; ++i)
-                        temperatureSeries.append(i, root.temperatureHistory[i]);
-                }
             }
         }
 
@@ -87,20 +78,30 @@ Item {
                 shading: Surface3DSeries.Shading.Smooth
                 drawMode: Surface3DSeries.DrawFlag.DrawSurface
             }
+        }
+    }
 
-            Connections {
-                target: root
-                function onSurfaceGridChanged() {
-                    const rows = [];
-                    for (let r = 0; r < root.surfaceGrid.length; ++r) {
-                        const row = [];
-                        for (let c = 0; c < root.surfaceGrid[r].length; ++c)
-                            row.push(Qt.vector3d(c, root.surfaceGrid[r][c], r));
-                        rows.push(row);
-                    }
-                    surfaceSeries.dataArray = rows;
-                }
+    Connections {
+        target: root
+        function onVibrationHistoryChanged() {
+            vibrationSeries.clear();
+            for (let i = 0; i < root.vibrationHistory.length; ++i)
+                vibrationSeries.append(i, root.vibrationHistory[i]);
+        }
+        function onTemperatureHistoryChanged() {
+            temperatureSeries.clear();
+            for (let i = 0; i < root.temperatureHistory.length; ++i)
+                temperatureSeries.append(i, root.temperatureHistory[i]);
+        }
+        function onSurfaceGridChanged() {
+            const rows = [];
+            for (let r = 0; r < root.surfaceGrid.length; ++r) {
+                const row = [];
+                for (let c = 0; c < root.surfaceGrid[r].length; ++c)
+                    row.push(Qt.vector3d(c, root.surfaceGrid[r][c], r));
+                rows.push(row);
             }
+            surfaceSeries.dataArray = rows;
         }
     }
 }

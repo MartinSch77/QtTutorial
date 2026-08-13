@@ -26,7 +26,9 @@ Node {
         : Theme.colorForState(state)
 
     // Semi-transparent "reveal internals" mode while selected/inspected.
-    readonly property real bodyOpacity: selected ? 0.35 : 1.0
+    // Not readonly: a Behavior needs write access to animate this property,
+    // even though its value is still fully driven by the binding below.
+    property real bodyOpacity: selected ? 0.35 : 1.0
 
     Behavior on bodyOpacity { NumberAnimation { duration: Theme.transitionMs } }
 
