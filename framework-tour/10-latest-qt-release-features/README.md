@@ -1,10 +1,20 @@
 # 10 – Latest Qt Release Features
 
-The flagship "what's new in Qt" showcase: a live, real-time multi-sensor
-telemetry dashboard using **Qt Graphs** (`import QtGraphs`), the 2D
-charting module that is current as of Qt 6.11 — a simulated line chart of
-three telemetry sensors updating several times a second, plus a live bar
-chart of their latest readings.
+The flagship "what's new in Qt" showcase, targeting **Qt 6.11.1** (the
+current Qt release at the time this module was written): a live, real-time
+multi-sensor telemetry dashboard using **Qt Graphs** (`import QtGraphs`) — a
+simulated line chart of three telemetry sensors updating several times a
+second, plus a live bar chart of their latest readings.
+
+One series (`seriesC`, "Sensor C – Thermal") is deliberately drawn using
+`LineSeries.strokeStyle: LineSeries.DashLine` together with `dashPattern`
+and `dashOffset` — all three are properties **introduced in Qt 6.11** (along
+with `joinStyle` and `lineStyle`, also new in 6.11; `seriesB` sets
+`joinStyle: Qt.RoundJoin` to show that one too), confirmed against the Qt
+6.11.0 `LineSeries` QML type reference before use. Before this release,
+`LineSeries` had no dashing/join/line-style control at all in QML — this is
+a genuine, checkable 6.11 addition, not a cumulative "current as of 6.11"
+restatement of older Qt Graphs functionality.
 
 **Licensing:** unlike every other module in this repository, this one is
 **GPL-3.0-or-later**, not MIT. See [`NOTICE.md`](NOTICE.md) for why — in

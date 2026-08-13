@@ -9,7 +9,7 @@ ApplicationWindow {
     width: 720
     height: 640
     visible: true
-    title: qsTr("Qt Graphs – Live Multi-Sensor Telemetry (Qt 6.9–6.11 showcase)")
+    title: qsTr("Qt Graphs – Live Multi-Sensor Telemetry (Qt 6.11.1 showcase)")
     color: "#101418"
 
     TelemetryFeed {
@@ -77,8 +77,19 @@ ApplicationWindow {
             }
 
             LineSeries { id: seriesA; name: qsTr("Sensor A – Pressure") }
-            LineSeries { id: seriesB; name: qsTr("Sensor B – Vibration") }
-            LineSeries { id: seriesC; name: qsTr("Sensor C – Thermal") }
+            LineSeries { id: seriesB; name: qsTr("Sensor B – Vibration"); joinStyle: Qt.RoundJoin }
+            // strokeStyle/dashPattern/dashOffset are new in Qt 6.11 (Qt Graphs
+            // LineSeries) - dashing this series marks it as the "projected
+            // trend" line to distinguish it visually from the two measured
+            // sensors above, using a real 6.11-only API rather than a
+            // hand-rolled dash effect.
+            LineSeries {
+                id: seriesC
+                name: qsTr("Sensor C – Thermal (dashed via Qt 6.11 strokeStyle)")
+                strokeStyle: LineSeries.DashLine
+                dashPattern: [6, 3]
+                dashOffset: 0
+            }
         }
 
         Label {

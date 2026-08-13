@@ -1,9 +1,10 @@
 # Tutorial: Latest Qt Release Features (Qt Graphs)
 
 This walks through `framework-tour/10-latest-qt-release-features/`: a live
-multi-sensor telemetry dashboard built on **Qt Graphs**, the current (as of
-Qt 6.11) 2D charting module, plus a survey of a few other genuinely recent
-Qt highlights.
+multi-sensor telemetry dashboard built on **Qt Graphs**, targeting **Qt
+6.11.1** — including `LineSeries` dash/join/line-style properties that are
+new *in* 6.11, not just "supported as of" it (see §5) — plus a survey of a
+few other genuinely recent Qt highlights.
 
 ## 1. Licensing comes first here
 
@@ -81,7 +82,35 @@ a pure function of sensor index and elapsed time, with no dependency on the
 timer or QML at all, which is what makes it directly unit-testable in
 `tests/framework-tour/10-latest-qt-release-features/test_telemetry_generator.cpp`.
 
-## 5. Other Qt 6.9–6.11 highlights worth knowing
+## 5. A feature that is specifically new in Qt 6.11
+
+`LineSeries.strokeStyle`, `dashPattern`, `dashOffset`, `joinStyle`, and
+`lineStyle` did not exist before Qt 6.11 — before this release `LineSeries`
+had no dash/join/line-style control in QML at all. `qml/Main.qml` uses this
+for real, not just in prose:
+
+```qml
+LineSeries {
+    id: seriesB
+    name: qsTr("Sensor B – Vibration")
+    joinStyle: Qt.RoundJoin          // new in 6.11
+}
+LineSeries {
+    id: seriesC
+    name: qsTr("Sensor C – Thermal (dashed via Qt 6.11 strokeStyle)")
+    strokeStyle: LineSeries.DashLine // new in 6.11
+    dashPattern: [6, 3]              // new in 6.11
+    dashOffset: 0                    // new in 6.11
+}
+```
+
+This is the difference this module is trying to draw between "current as of
+Qt 6.11" (Qt Graphs itself, which has existed since 6.6/6.9 depending on the
+sub-module) and "introduced *in* Qt 6.11" (this specific set of `LineSeries`
+properties) — both are worth knowing when evaluating a Qt upgrade, but only
+the latter is a genuinely new capability you couldn't reach for on 6.10.
+
+## 6. Other Qt 6.9–6.11 highlights worth knowing
 
 See the module's `README.md` for a short, doc-verified summary of Qt GRPC,
 continued Qt Quick Controls customization improvements, and Qt Safe
@@ -89,7 +118,7 @@ Renderer — none implemented in this module, but relevant context for anyone
 evaluating a Qt upgrade, and (for Qt Safe Renderer specifically) directly
 relevant to this repository's avionics/space/railway industry showcases.
 
-## 6. Try it yourself
+## 7. Try it yourself
 
 - Change `historySeconds` in `qml/Main.qml` to make the scrolling window
   longer or shorter.
