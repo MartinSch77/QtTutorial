@@ -15,6 +15,14 @@ ApplicationWindow {
         id: controller
     }
 
+    // LobbyView declares its own "property var controller" - writing
+    // "controller: controller" below would self-shadow to that property
+    // instead of this outer id, producing a binding loop and leaving
+    // LobbyView's controller undefined at runtime (same bug shape found
+    // and fixed in industries/games/maumau/qml/Main.qml and
+    // industries/factory/offboard-digital-twin-control-center/qml/Main.qml).
+    property var gameController: controller
+
     readonly property bool seated: controller.mySeat >= 0
 
     Rectangle {
@@ -30,7 +38,7 @@ ApplicationWindow {
 
             LobbyView {
                 id: lobby
-                controller: controller
+                controller: window.gameController
             }
         }
     }

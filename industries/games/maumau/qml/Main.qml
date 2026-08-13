@@ -15,6 +15,19 @@ ApplicationWindow {
         id: controller
     }
 
+    // LobbyPage/TablePage each declare their own "property var controller" -
+    // writing "controller: controller" directly in their object literals
+    // resolves the unqualified RHS to that same component's own property
+    // first (self-shadowing), not this outer "controller" id, producing a
+    // genuine "Binding loop detected for property controller" and leaving
+    // root.controller undefined at runtime (confirmed by actually running
+    // the app: hostGame()/joinManual() failed with "Cannot call method ...
+    // of undefined"). "window" has no property named "controller" itself,
+    // so this capture is unambiguous, and "window.gameController" below is
+    // unambiguous from any scope - same fix as the identical shape found in
+    // industries/factory/offboard-digital-twin-control-center/qml/Main.qml.
+    property var gameController: controller
+
     Loader {
         anchors.fill: parent
         sourceComponent: controller.inGame ? tablePageComponent : lobbyPageComponent
@@ -22,11 +35,11 @@ ApplicationWindow {
 
     Component {
         id: lobbyPageComponent
-        LobbyPage { controller: controller }
+        LobbyPage { controller: window.gameController }
     }
 
     Component {
         id: tablePageComponent
-        TablePage { controller: controller }
+        TablePage { controller: window.gameController }
     }
 }

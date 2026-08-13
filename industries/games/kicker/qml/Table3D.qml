@@ -118,6 +118,7 @@ Item {
         Repeater3D {
             model: 12
             Node {
+                id: figureNode
                 readonly property int rodIndex: Math.floor(index / 3)
                 readonly property int figureIndex: index % 3
                 readonly property real rodSlide: [root.rod0Slide, root.rod1Slide, root.rod2Slide, root.rod3Slide][rodIndex]
@@ -131,7 +132,15 @@ Item {
                 Model {
                     source: "#Cylinder"
                     scale: Qt.vector3d(0.06, 0.05, 0.06)
-                    materials: PrincipledMaterial { baseColor: parent.teamColor; roughness: 0.5 }
+                    // Not "parent.teamColor": this material's QQuick3DObject
+                    // "parent" is the immediately enclosing Model, not the
+                    // outer Node two levels up that actually declares
+                    // "teamColor" - that mismatch produced a real
+                    // "Unable to assign [undefined] to QColor" at runtime
+                    // for every one of the 12 figures, confirmed by
+                    // actually running this app. figureNode.teamColor
+                    // resolves unambiguously regardless of nesting depth.
+                    materials: PrincipledMaterial { baseColor: figureNode.teamColor; roughness: 0.5 }
                     castsShadows: true
                 }
                 Model {
