@@ -24,6 +24,7 @@ list(APPEND CMAKE_MODULE_PATH "${CMAKE_CURRENT_SOURCE_DIR}/cmake")
 option(QTTUTORIAL_BUILD_FRAMEWORK_TOUR "Build the framework-tour modules" ON)
 option(QTTUTORIAL_BUILD_INDUSTRIES "Build the industry showcase apps" ON)
 option(QTTUTORIAL_BUILD_GAMES "Build the games (LAN multiplayer card/kicker games)" ON)
+option(QTTUTORIAL_BUILD_SHOWCASES "Build the general-purpose visual showcase apps" ON)
 option(QTTUTORIAL_BUILD_TESTS "Build unit tests" ON)
 option(QTTUTORIAL_ENABLE_SANITIZERS "Build with ASan+UBSan" OFF)
 option(QTTUTORIAL_ENABLE_COVERAGE "Build with --coverage instrumentation" OFF)
@@ -56,6 +57,10 @@ endif()
 
 if(QTTUTORIAL_BUILD_GAMES)
     add_subdirectory(games)
+endif()
+
+if(QTTUTORIAL_BUILD_SHOWCASES)
+    add_subdirectory(showcases)
 endif()
 
 if(QTTUTORIAL_BUILD_TESTS)

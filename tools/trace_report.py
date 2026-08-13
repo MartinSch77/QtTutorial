@@ -5,12 +5,14 @@ Walks the repo tree looking for:
   - framework-tour/<name>/            (every immediate subdirectory)
   - industries/<industry>/{onboard,offboard}-<name>/
   - games/<name>/                     (every immediate subdirectory, incl. "common")
+  - showcases/<name>/                 (every immediate subdirectory)
 
 For each one found, checks whether a matching test directory containing a
 CMakeLists.txt exists:
   - tests/framework-tour/<name>/CMakeLists.txt
   - tests/industries/<industry>/<name>/CMakeLists.txt
   - tests/games/<name>/CMakeLists.txt
+  - tests/showcases/<name>/CMakeLists.txt
 
 Writes a markdown traceability table to docs/qa/traceability.md mapping each
 module/example to whether it has a test directory, and which REQ-* IDs from
@@ -39,14 +41,17 @@ REPO_ROOT = Path(__file__).resolve().parent.parent
 FRAMEWORK_TOUR_DIR = REPO_ROOT / "framework-tour"
 INDUSTRIES_DIR = REPO_ROOT / "industries"
 GAMES_DIR = REPO_ROOT / "games"
+SHOWCASES_DIR = REPO_ROOT / "showcases"
 TESTS_DIR = REPO_ROOT / "tests"
 OUTPUT_PATH = REPO_ROOT / "docs" / "qa" / "traceability.md"
 
 # Non-module files/dirs that can legitimately sit alongside real modules at
-# the framework-tour/, industries/<industry>/, and games/ top levels.
+# the framework-tour/, industries/<industry>/, games/, and showcases/ top
+# levels.
 FRAMEWORK_TOUR_IGNORE = {"CMakeLists.txt"}
 INDUSTRY_IGNORE = {"CMakeLists.txt"}
 GAMES_IGNORE = {"CMakeLists.txt"}
+SHOWCASES_IGNORE = {"CMakeLists.txt"}
 
 
 @dataclass
@@ -135,6 +140,27 @@ def find_games_entries() -> list[Entry]:
     return entries
 
 
+def find_showcases_entries() -> list[Entry]:
+    entries: list[Entry] = []
+    if not SHOWCASES_DIR.is_dir():
+        return entries
+    for child in sorted(SHOWCASES_DIR.iterdir()):
+        if not child.is_dir():
+            continue
+        if child.name in SHOWCASES_IGNORE:
+            continue
+        name = child.name
+        entries.append(
+            Entry(
+                category="showcases",
+                display_name=f"showcases/{name}",
+                test_dir=TESTS_DIR / "showcases" / name,
+                req_ids=["REQ-SHOWCASE-01", "REQ-SHOWCASE-02"],
+            )
+        )
+    return entries
+
+
 def render_report(entries: list[Entry]) -> str:
     lines = [
         "# Requirements Traceability Report",
@@ -171,7 +197,12 @@ def render_report(entries: list[Entry]) -> str:
 
 
 def main() -> int:
-    entries = find_framework_tour_entries() + find_industry_entries() + find_games_entries()
+    entries = (
+        find_framework_tour_entries()
+        + find_industry_entries()
+        + find_games_entries()
+        + find_showcases_entries()
+    )
 
     report = render_report(entries)
     OUTPUT_PATH.parent.mkdir(parents=True, exist_ok=True)

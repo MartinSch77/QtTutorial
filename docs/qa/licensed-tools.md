@@ -57,6 +57,12 @@ This is a sketch of the shape of an Axivion project file, not a validated
 Axivion schema — see TradingApp's actual `.axivion` setup for the real
 thing.
 
+**A real, checked-in illustrative config file** (not just the snippet
+above) lives at [`qa-configs/axivion/axivion_config.json`](../../qa-configs/axivion/axivion_config.json),
+extended to also cover the `games/` and `showcases/` categories added
+after this document was first written — see
+[`qa-configs/axivion/README.md`](../../qa-configs/axivion/README.md).
+
 ---
 
 ## Squish for Qt
@@ -95,6 +101,12 @@ def main():
     squish.test.compare(squish.waitForObjectExists(":resultLabel").text, "100 cm = 1 m")
 ```
 
+**A real, checked-in Squish Test Suite skeleton** lives at
+[`qa-configs/squish/example_suite/`](../../qa-configs/squish/example_suite/)
+(a genuine `suite.conf` + test-case directory shape, not just a snippet) —
+see [`qa-configs/squish/README.md`](../../qa-configs/squish/README.md) for
+how to point it at any app in `framework-tour/`, `industries/`, or `games/`.
+
 ---
 
 ## Squish Coco
@@ -125,6 +137,12 @@ covwriter csbase.csexe --mcdc -o coverage-report/mcdc.html
 The `--cs` flag namespace and `csexe`/`csbase` naming above follow Coco's
 documented CLI shape; treat this as a sketch of the invocation, not a tested
 command line, since Coco is not present in this sandbox.
+
+**A real, checked-in illustrative build script** lives at
+[`qa-configs/coco/coco_build_example.sh`](../../qa-configs/coco/coco_build_example.sh)
+(configures and builds *this actual CMake project* with Coco's instrumenting
+compiler wrappers, then runs `csreport`) — see
+[`qa-configs/coco/README.md`](../../qa-configs/coco/README.md).
 
 ---
 

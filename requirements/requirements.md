@@ -119,6 +119,18 @@ been reviewed.
   *which* variant) it implements, so a player can check the digital rules
   against the physical ones they know.
 
+## Showcases requirements
+
+- **REQ-SHOWCASE-01**: Every `showcases/<name>/` app has its own
+  `CMakeLists.txt` and builds as part of the top-level `showcases` target
+  when `QTTUTORIAL_BUILD_SHOWCASES` is `ON`. Unlike `framework-tour/`
+  (teaches one Qt concept) and `industries/` (a vertical, split
+  onboard/offboard), `showcases/` apps are general-purpose, visually
+  impressive demos with no industry framing and no onboard/offboard split.
+- **REQ-SHOWCASE-02**: Each showcase's non-UI logic (data model, feed
+  parsing/simulation) is separated into a static library target and covered
+  by at least one QTest test executable under `tests/showcases/<name>/`.
+
 ## Explicitly out of scope for this list
 
 This list does not attempt to specify the detailed functional behavior of
