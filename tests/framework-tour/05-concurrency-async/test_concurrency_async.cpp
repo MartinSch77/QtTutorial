@@ -99,10 +99,19 @@ private slots:
         JThreadWorker worker;
         bool stopped = false;
         bool finished = false;
-        connect(&worker, &JThreadWorker::stopped, [&] { stopped = true; });
-        connect(&worker, &JThreadWorker::finished, [&](std::vector<ChannelStats>, qint64, std::size_t) {
-            finished = true;
-        });
+        // The third argument (`this`) is load-bearing, not stylistic: a
+        // connect() with no receiver context object invokes the lambda
+        // directly on whichever thread emits the signal (JThreadWorker's
+        // worker thread here), not queued to the connecting/main thread --
+        // "AutoConnection resolves to Queued based on thread affinity" only
+        // applies when there is a receiver object whose affinity Qt can
+        // check. Without `this`, both lambdas below wrote `stopped`/
+        // `finished` from the worker thread while this test function read
+        // them from the main thread with no synchronization at all, a real
+        // data race caught by this repo's CI ThreadSanitizer job.
+        connect(&worker, &JThreadWorker::stopped, this, [&] { stopped = true; });
+        connect(&worker, &JThreadWorker::finished, this,
+                [&](std::vector<ChannelStats>, qint64, std::size_t) { finished = true; });
 
         const auto samples = generateSamples(3, 2'000'000, 4);
         worker.start(samples, 4);
