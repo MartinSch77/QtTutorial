@@ -21,6 +21,19 @@ ApplicationWindow {
     property int selectedMachineId: -1
     property var selectedMachine: null
 
+    // Captures the "machineModel" root-context property (set via
+    // engine.rootContext()->setContextProperty() in main.cpp) under a
+    // distinct name. FactoryScene3D/EquipmentTree/CommandPalette below each
+    // declare their OWN "property var machineModel" - writing
+    // "machineModel: machineModel" directly in their object literals
+    // resolves the unqualified RHS to that same component's own property
+    // first (self-shadowing), not the outer context property, producing a
+    // genuine "Binding loop detected for property machineModel" at
+    // runtime. "window" has no property named "machineModel" itself, so
+    // this line is unambiguous, and "window.globalMachineModel" below is
+    // unambiguous from any scope.
+    property var globalMachineModel: machineModel
+
     function machineAt(index) {
         if (index < 0 || index >= machineModel.rowCount())
             return null;
@@ -134,7 +147,7 @@ ApplicationWindow {
                 CommandPalette {
                     width: 380
                     height: 40
-                    machineModel: machineModel
+                    machineModel: window.globalMachineModel
                     onMachineChosen: (machineId) => window.selectMachine(machineId)
                     onCommandChosen: (command) => {
                         if (command === "play-demo") { demoConductor.play(); return; }
@@ -161,7 +174,7 @@ ApplicationWindow {
                 width: Theme.isTablet ? 0 : parent.width * 0.18
                 visible: !Theme.isTablet
                 height: parent.height
-                machineModel: machineModel
+                machineModel: window.globalMachineModel
                 selectedMachineId: window.selectedMachineId
                 onMachineSelected: (machineId) => window.selectMachine(machineId)
             }
@@ -170,7 +183,7 @@ ApplicationWindow {
                 id: scene3D
                 width: Theme.isTablet ? parent.width * 0.7 : parent.width * 0.56
                 height: parent.height
-                machineModel: machineModel
+                machineModel: window.globalMachineModel
                 selectedMachineId: window.selectedMachineId
                 thermalOverlay: window.thermalOverlayEnabled
                 onMachineClicked: (machineId) => window.selectMachine(machineId)

@@ -57,9 +57,14 @@ public:
     void tick(double dtSeconds);
 
     // Demo-scenario hooks (step 2/5 of the acceptance-test walkthrough).
-    void beginOverheat(int machineId);
-    void clearFault(int machineId);
-    void setStopped(int machineId, bool stopped);
+    // Q_INVOKABLE, not plain public methods: qml/Main.qml calls
+    // beginOverheat()/clearFault() directly on this object, and a plain
+    // public method (no Q_INVOKABLE, not a slot) is invisible to QML -
+    // confirmed by actually running the app, which failed at runtime with
+    // "Property 'beginOverheat' of object ... is not a function".
+    Q_INVOKABLE void beginOverheat(int machineId);
+    Q_INVOKABLE void clearFault(int machineId);
+    Q_INVOKABLE void setStopped(int machineId, bool stopped);
 
 public slots:
     void start();
