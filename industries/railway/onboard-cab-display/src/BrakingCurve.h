@@ -10,4 +10,14 @@ namespace qttutorial::cab_display {
 // next restriction" testable without simulating a train at all.
 [[nodiscard]] double maxSafeSpeedKmh(double distanceToRestrictionM, double targetSpeedKmh, double decelerationMs2);
 
+// A hysteresis-based brake-warning latch, mirroring the way a real ETCS/ATP
+// system debounces its brake-intervention indication instead of flickering
+// exactly at the supervision limit: once active, `speedKmh` must fall back
+// to `permittedSpeedKmh + offMarginKmh` or below before it clears, but it
+// only becomes active once `speedKmh` exceeds `permittedSpeedKmh +
+// onMarginKmh`. Pure function of its inputs (including the previous state),
+// so it is testable without simulating a train.
+[[nodiscard]] bool nextBrakeWarningState(bool currentlyActive, double speedKmh, double permittedSpeedKmh,
+                                          double onMarginKmh, double offMarginKmh);
+
 } // namespace qttutorial::cab_display

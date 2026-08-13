@@ -43,6 +43,35 @@ private slots:
         QCOMPARE(coverage.size(), std::size_t{3});
         QCOMPARE(coverage[2], 9.0);
     }
+
+    void recordsAndQueriesFuelAndEngineLoadHistory()
+    {
+        OperationHistoryStore store(QStringLiteral(":memory:"), QStringLiteral("test_records_fuel_and_load"));
+        QVERIFY(store.isOpen());
+
+        QVERIFY(store.recordSample(QStringLiteral("FLD-001"), 1000, 10.0, QStringLiteral("working"), 78.0, 95.0));
+        QVERIFY(store.recordSample(QStringLiteral("FLD-001"), 2000, 20.0, QStringLiteral("working"), 80.0, 90.0));
+
+        const std::vector<double> fuel = store.recentFuelLevels(QStringLiteral("FLD-001"), 10);
+        QCOMPARE(fuel.size(), std::size_t{2});
+        QCOMPARE(fuel[0], 95.0);
+        QCOMPARE(fuel[1], 90.0);
+
+        const std::vector<double> load = store.recentEngineLoads(QStringLiteral("FLD-001"), 10);
+        QCOMPARE(load.size(), std::size_t{2});
+        QCOMPARE(load[0], 78.0);
+        QCOMPARE(load[1], 80.0);
+    }
+
+    void defaultsEngineLoadAndFuelToSentinelWhenNotProvided()
+    {
+        OperationHistoryStore store(QStringLiteral(":memory:"), QStringLiteral("test_defaults_engine_fuel"));
+        QVERIFY(store.recordSample(QStringLiteral("FLD-001"), 1000, 10.0, QStringLiteral("working")));
+
+        const std::vector<double> fuel = store.recentFuelLevels(QStringLiteral("FLD-001"), 10);
+        QCOMPARE(fuel.size(), std::size_t{1});
+        QCOMPARE(fuel[0], -1.0);
+    }
 };
 
 QTEST_MAIN(TestOperationHistoryStore)

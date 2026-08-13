@@ -29,6 +29,12 @@ void ThermostatController::setMode(Mode mode)
     emit temperatureChanged();
 }
 
+void ThermostatController::applyScene(int sceneId)
+{
+    SceneRegistry::applyToThermostat(static_cast<Scene>(sceneId), m_model);
+    emit temperatureChanged();
+}
+
 void ThermostatController::tick()
 {
     m_model.advance(kTickSeconds);

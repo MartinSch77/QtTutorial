@@ -1,6 +1,7 @@
 // SPDX-License-Identifier: MIT
 #pragma once
 
+#include "GroundTrackSimulator.h"
 #include "OrbitalSimulator.h"
 #include "PowerSystem.h"
 #include "SubsystemHealthMachine.h"
@@ -28,6 +29,8 @@ public:
     [[nodiscard]] const OrbitalState& orbitalState() const { return m_orbit.state(); }
     [[nodiscard]] const PowerState& powerState() const { return m_power.state(); }
     [[nodiscard]] double thermalZoneTemperatureC(ThermalZone zone) const { return m_thermal.temperatureC(zone); }
+    [[nodiscard]] const GroundTrackState& groundTrackState() const { return m_groundTrack.state(); }
+    [[nodiscard]] bool homeStationInView() const;
     [[nodiscard]] const std::vector<std::unique_ptr<SubsystemHealthMachine>>& subsystemMachines() const
     {
         return m_subsystems;
@@ -42,6 +45,7 @@ private:
     OrbitalSimulator m_orbit;
     PowerSystem m_power;
     ThermalSimulator m_thermal;
+    GroundTrackSimulator m_groundTrack;
     std::vector<std::unique_ptr<SubsystemHealthMachine>> m_subsystems;
     QTimer m_timer;
 };

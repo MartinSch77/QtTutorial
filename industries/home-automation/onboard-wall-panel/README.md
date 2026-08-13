@@ -6,12 +6,44 @@ representative of software that would run embedded on the physical panel
 mounted at home, at the point of control — no network, no persistence, just
 direct, immediate control of the devices in the house.
 
+## Design reference
+
+The card-based room tiles, the scene selector, and the small device icons
+(house, lightbulb, thermostat dial, lock, camera, door/window sensor) take
+their visual language from the room-by-room dashboard + scene-selector genre
+popularized by apps like Google Home, Apple Home, and Control4 - dark
+cards, a colored accent per device state, one-tap "scenes" that change
+several devices at once. This is a **style/genre reference only**: nothing
+here reproduces any of those products' logos, wordmarks, exact layouts, or
+other trademarked assets. Every icon is drawn from scratch as plain
+geometric paths on a Qt Quick `Canvas` (see `ThermostatGauge.qml`, and the
+new `HouseIcon.qml`/`LightbulbIcon.qml`/`LockIcon.qml`/`CameraIcon.qml`/
+`DoorSensorIcon.qml`/`ThermostatIcon.qml`/`SunMoonIcon.qml`) - no icon font,
+image, or SVG asset is fetched from anywhere.
+
 ## What it demonstrates
 
-- A sidebar-selected, tabbed layout (Lighting / Climate / Locks / Blinds /
-  Security) so all five device categories fit cleanly in one application,
-  matching the "control all devices with one application" goal rather than
-  splitting them across several narrow apps.
+- A sidebar-selected, tabbed layout (Scenes / Lighting / Climate / Locks /
+  Blinds / Security) so all device categories fit cleanly in one
+  application, matching the "control all devices with one application" goal
+  rather than splitting them across several narrow apps.
+- A **Scenes** tab (`ScenesPanel.qml`/`SceneCard.qml`) offering Home / Away /
+  Night / Morning, each of which changes lighting, locks, security arming
+  and the thermostat setpoint together in one tap - e.g. Away turns every
+  light off, locks every door, arms the security system and sets the
+  thermostat back for energy saving; Night dims (rather than kills) the
+  lights and arms security for the night; Home and Morning turn lights back
+  on and stand security down. The cross-device policy for each scene lives
+  in `SceneRegistry`, a plain C++ class with no Qt GUI dependency, so each
+  scene's effect on every device category is unit tested independent of the
+  QML wall panel; `RoomListModel`/`LockListModel`/`SecurityListModel`/
+  `ThermostatController` each expose a small `applyScene()` that just calls
+  into it.
+- A camera-feed placeholder tile grid (`CameraTile.qml`) added to the
+  Security panel - no real video (this example still has no network/camera
+  hardware dependency, see REQ-IND-04 below), just a labelled placeholder
+  with a live/idle indicator that tracks whether the security system is
+  armed, the way a real camera tile would show "recording" only while armed.
 - Room-by-room lighting (on/off + brightness slider, a handful of rooms) and
   window blind/shade position sliders, both backed by `RoomRegistry`, which
   holds and clamps each room's state.
@@ -35,13 +67,17 @@ direct, immediate control of the devices in the house.
   state, clamping and thermal-model logic lives in
   `ThermostatModel`/`RoomRegistry`/`LockRegistry`/`SecurityCenter`, plain C++
   classes with no Qt GUI dependency, so they are unit tested headlessly.
+  `SceneRegistry` sits alongside them at the same level, orchestrating all
+  four at once for a given scene.
 
 ## Qt modules/APIs exercised
 
 - **Qt Quick / QML** for a GPU-accelerated, low-footprint HMI suitable for a
   wall-mounted touch panel.
-- **Qt Quick `Canvas`** for the thermostat gauge, avoiding any charting
-  library (Qt Charts/Graphs are not MIT licensed).
+- **Qt Quick `Canvas`** for the thermostat gauge and for every device/scene
+  icon (house, lightbulb, thermostat dial, lock, camera, door/window
+  sensor, sun/moon) - hand-painted vector paths rather than an icon font,
+  bitmap asset, or charting library (Qt Charts/Graphs are not MIT licensed).
 - **`QML_ELEMENT`** / `qt_add_qml_module` for direct C++-to-QML type
   registration of the list models and thermostat controller.
 - **`QAbstractListModel`** for the room/lock/sensor lists driving `Repeater`s
@@ -69,5 +105,9 @@ cmake --build build --target onboard_wall_panel
 
 See `tests/industries/home-automation/onboard-wall-panel/`, which covers
 `ThermostatModel`'s heat/cool/off behaviour and rate, `RoomRegistry`'s
-lighting/blind toggling and clamping, `LockRegistry`'s change log, and
-`SecurityCenter`'s armed/breach logic — all without any Qt GUI dependency.
+lighting/blind toggling and clamping, `LockRegistry`'s change log,
+`SecurityCenter`'s armed/breach logic, and `SceneRegistry`'s cross-device
+scene policy (e.g. that Away turns off every light, locks every door, arms
+security and sets the thermostat back, and that applying the same scene
+twice in a row does not double-log a lock change) — all without any Qt GUI
+dependency.

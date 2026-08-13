@@ -2,6 +2,8 @@
 #include "TrainSimulator.h"
 #include "BrakingCurve.h"
 
+#include <QVariantMap>
+
 #include <algorithm>
 #include <cmath>
 #include <limits>
@@ -12,6 +14,7 @@ namespace {
 constexpr double kKmhToMs = 1000.0 / 3600.0;
 constexpr double kMsToKmh = 3600.0 / 1000.0;
 constexpr double kYellowLookaheadM = 1200.0;
+constexpr double kGravityMs2 = 9.81;
 constexpr int kTickIntervalMs = 100;
 constexpr double kTickIntervalSeconds = kTickIntervalMs / 1000.0;
 }
@@ -32,6 +35,7 @@ void TrainSimulator::tick(double dtSeconds)
         m_speedKmh = 0.0;
         m_doorsOpen = true;
         m_signalAspect = SignalAspect::Red;
+        m_brakeWarningActive = false;
         if (m_dwellRemainingSeconds <= 0.0) {
             m_dwellRemainingSeconds = 0.0;
             m_doorsOpen = false;
@@ -74,8 +78,18 @@ void TrainSimulator::tick(double dtSeconds)
         m_restrictionSpeedKmh = currentSegmentSpeed;
     }
 
-    const double maxRateKmhPerS = (m_speedKmh < m_permittedSpeedKmh ? kMaxAccelerationMs2 : kServiceDecelerationMs2)
-        * kMsToKmh;
+    // The braking-curve function above assumes a flat track. Actual traction
+    // and braking effort here is adjusted for the segment's real gradient
+    // (gravity helps braking uphill, hinders it downhill), so a steep enough
+    // downhill segment can make the train's real deceleration fall short of
+    // what the curve assumed when it set `m_permittedSpeedKmh` — a genuine,
+    // physically-motivated overspeed rather than a discretisation artefact.
+    const double gravityTermMs2 = kGravityMs2 * (m_route.gradientPercentAt(m_positionM) / 100.0);
+    const double effectiveAccelerationMs2 = std::max(0.05, kMaxAccelerationMs2 - gravityTermMs2);
+    const double effectiveDecelerationMs2 = std::max(0.05, kServiceDecelerationMs2 + gravityTermMs2);
+
+    const double maxRateKmhPerS
+        = (m_speedKmh < m_permittedSpeedKmh ? effectiveAccelerationMs2 : effectiveDecelerationMs2) * kMsToKmh;
     const double delta = m_permittedSpeedKmh - m_speedKmh;
     const double step = std::clamp(delta, -maxRateKmhPerS * dtSeconds, maxRateKmhPerS * dtSeconds);
     m_speedKmh = std::max(0.0, m_speedKmh + step);
@@ -114,7 +128,25 @@ void TrainSimulator::tick(double dtSeconds)
             = (m_distanceToRestrictionM <= kYellowLookaheadM) ? SignalAspect::Yellow : SignalAspect::Green;
     }
 
+    m_brakeWarningActive = nextBrakeWarningState(m_brakeWarningActive, m_speedKmh, m_permittedSpeedKmh,
+                                                  kBrakeWarningOnMarginKmh, kBrakeWarningOffMarginKmh);
+
     emit updated();
+}
+
+QVariantList TrainSimulator::upcomingRestrictions() const
+{
+    const std::vector<Restriction> restrictions
+        = m_route.upcomingRestrictions(m_positionM, kPlanningLookaheadM, kPlanningMaxRestrictions);
+    QVariantList list;
+    list.reserve(static_cast<qsizetype>(restrictions.size()));
+    for (const Restriction& restriction : restrictions) {
+        QVariantMap entry;
+        entry.insert(QStringLiteral("distanceM"), restriction.distanceToStartM);
+        entry.insert(QStringLiteral("speedKmh"), restriction.permittedSpeedKmh);
+        list.append(entry);
+    }
+    return list;
 }
 
 } // namespace qttutorial::cab_display

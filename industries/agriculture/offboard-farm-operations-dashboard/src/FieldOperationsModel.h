@@ -15,7 +15,7 @@ namespace qttutorial::agriculture::ops {
 class FieldOperationsModel : public QAbstractTableModel {
     Q_OBJECT
 public:
-    enum Column { VehicleColumn, FieldColumn, CoverageColumn, StatusColumn, ColumnCount };
+    enum Column { VehicleColumn, FieldColumn, CoverageColumn, StatusColumn, JobStatusColumn, ColumnCount };
 
     explicit FieldOperationsModel(int fieldCount = 6, QObject* parent = nullptr);
 

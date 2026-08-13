@@ -45,6 +45,28 @@ private slots:
         QVERIFY(log.alertsBySeverity().empty());
         QCOMPARE(log.size(), std::size_t(0));
     }
+
+    void filtersByMinimumSeverity()
+    {
+        AlertLog log;
+        const QDateTime now = QDateTime::currentDateTimeUtc();
+
+        log.addAlert(Alert{QStringLiteral("A"), QStringLiteral("info msg"), AlertSeverity::Info, now});
+        log.addAlert(Alert{QStringLiteral("B"), QStringLiteral("critical msg"), AlertSeverity::Critical, now});
+        log.addAlert(Alert{QStringLiteral("C"), QStringLiteral("caution msg"), AlertSeverity::Caution, now});
+
+        const auto criticalOnly = log.alertsBySeverity(AlertSeverity::Critical);
+        QCOMPARE(criticalOnly.size(), std::size_t(1));
+        QCOMPARE(criticalOnly[0].assetId, QStringLiteral("B"));
+
+        const auto cautionAndAbove = log.alertsBySeverity(AlertSeverity::Caution);
+        QCOMPARE(cautionAndAbove.size(), std::size_t(2));
+        QCOMPARE(cautionAndAbove[0].severity, AlertSeverity::Critical);
+        QCOMPARE(cautionAndAbove[1].severity, AlertSeverity::Caution);
+
+        const auto everything = log.alertsBySeverity(AlertSeverity::Info);
+        QCOMPARE(everything.size(), std::size_t(3));
+    }
 };
 
 QTEST_MAIN(TestAlertLog)

@@ -1,15 +1,23 @@
 // SPDX-License-Identifier: MIT
 import QtQuick
 import QtQuick.Window
+import IndustrialAutomation.OnboardHmiPanel
 
+// Design reference: styled after the genre of embedded plant HMI/SCADA
+// mimic screens popularised by products like Siemens WinCC and Rockwell
+// FactoryTalk View (dark theme, colour-coded run/stop/fault equipment,
+// a P&ID-style process line with tank/valve/conveyor/motor, an alarm
+// list docked at the side) — this is a visual-language reference only.
+// No trademark, logo, wordmark, or exact layout from either product is
+// reproduced; every glyph on screen is drawn from scratch in QML below.
 Window {
     id: window
     visible: true
-    width: 960
-    height: 600
-    minimumWidth: 800
-    minimumHeight: 480
-    title: "Plant HMI Panel"
+    width: 1180
+    height: 700
+    minimumWidth: 960
+    minimumHeight: 560
+    title: "Plant HMI Panel — Line 1"
     color: "#12181f"
 
     readonly property color pipeColor: "#5a6472"
@@ -22,10 +30,59 @@ Window {
         anchors.margins: 16
         spacing: 12
 
+        // Title strip — the kind of fixed plant/line identification banner a
+        // real embedded HMI always shows so an operator standing at the
+        // cabinet knows exactly which line they are looking at.
+        Rectangle {
+            width: parent.width
+            height: 34
+            radius: 6
+            color: panelColor
+            border.color: "#2c3644"
+
+            Row {
+                anchors.fill: parent
+                anchors.leftMargin: 12
+                anchors.rightMargin: 12
+                spacing: 10
+
+                Text {
+                    anchors.verticalCenter: parent.verticalCenter
+                    text: "LINE 1 — FILLING & PACKAGING"
+                    color: "#f2f4f7"
+                    font.pixelSize: 13
+                    font.bold: true
+                }
+                Rectangle { width: 1; height: 18; color: "#2c3644"; anchors.verticalCenter: parent.verticalCenter }
+                Text {
+                    anchors.verticalCenter: parent.verticalCenter
+                    text: "Station: HMI-01"
+                    color: "#8a94a3"
+                    font.pixelSize: 11
+                }
+            }
+
+            Text {
+                anchors.right: parent.right
+                anchors.rightMargin: 12
+                anchors.verticalCenter: parent.verticalCenter
+                text: Qt.formatDateTime(new Date(), "yyyy-MM-dd hh:mm:ss")
+                color: "#8a94a3"
+                font.pixelSize: 11
+
+                Timer {
+                    interval: 1000
+                    running: true
+                    repeat: true
+                    onTriggered: parent.text = Qt.formatDateTime(new Date(), "yyyy-MM-dd hh:mm:ss")
+                }
+            }
+        }
+
         Row {
             width: parent.width
             spacing: 12
-            height: parent.height - alarmBanner.height - 12
+            height: parent.height - alarmBanner.height - 34 - 24
 
             Rectangle {
                 id: mimicPanel
@@ -40,6 +97,7 @@ Window {
                     anchors.fill: parent
                     anchors.margins: 24
 
+                    // ---- Stage 1: pump feeding the tank (existing loop) ----
                     Rectangle {
                         id: pipeIn
                         x: 40
@@ -99,59 +157,112 @@ Window {
                         font.bold: true
                     }
 
-                    Rectangle {
+                    // ---- Stage 2: the tank itself, now a proper silo glyph ----
+                    TankIcon {
                         id: tank
-                        x: 20
+                        x: 12
                         y: mimic.height - 260
-                        width: 160
+                        width: 150
                         height: 220
-                        radius: 4
-                        color: "#0d1116"
-                        border.color: pipeColor
-                        border.width: 2
-
-                        Rectangle {
-                            anchors.left: parent.left
-                            anchors.right: parent.right
-                            anchors.bottom: parent.bottom
-                            height: parent.height * Math.min(Math.max(processSim.tankLevel, 0), 100) / 100
-                            color: processSim.tankLevel > 90 ? "#e5484d" : (processSim.tankLevel < 10 ? "#e5b93d" : "#2f81f7")
-
-                            Behavior on height { NumberAnimation { duration: 200 } }
-                        }
-
-                        Text {
-                            anchors.horizontalCenter: parent.horizontalCenter
-                            anchors.bottom: parent.top
-                            anchors.bottomMargin: 4
-                            text: "TANK T-101"
-                            color: "#c8d0da"
-                            font.pixelSize: 11
-                        }
-
-                        Text {
-                            anchors.centerIn: parent
-                            text: processSim.tankLevel.toFixed(1) + " %"
-                            color: "#f2f4f7"
-                            font.pixelSize: 16
-                            font.bold: true
-                        }
+                        label: "TANK T-101"
+                        levelPercent: processSim.tankLevel
                     }
 
+                    // ---- Stage 3: downstream block valve, gating outflow ----
                     Rectangle {
+                        id: pipeToValve
                         x: tank.x + tank.width
-                        y: tank.y + tank.height - 12
-                        width: mimic.width - tank.x - tank.width - 40
+                        y: tank.y + tank.height - 14
+                        width: 34
                         height: 6
                         color: pipeColor
 
                         Rectangle {
                             anchors.fill: parent
                             color: "#2f81f7"
-                            opacity: 0.6
+                            opacity: processSim.valveOpen ? 0.7 : 0.15
                         }
                     }
 
+                    ValveIcon {
+                        id: valve
+                        x: pipeToValve.x + pipeToValve.width
+                        y: pipeToValve.y - 16
+                        width: 42
+                        height: 40
+                        open: processSim.valveOpen
+
+                        MouseArea {
+                            anchors.fill: parent
+                            onClicked: hmiApp.toggleValve()
+                        }
+                    }
+
+                    Text {
+                        anchors.top: valve.bottom
+                        anchors.horizontalCenter: valve.horizontalCenter
+                        text: "V-101\n" + (processSim.valveOpen ? "OPEN" : "CLOSED")
+                        horizontalAlignment: Text.AlignHCenter
+                        color: processSim.valveOpen ? "#3ddc84" : "#e5b93d"
+                        font.pixelSize: 9
+                        font.bold: true
+                    }
+
+                    // ---- Stage 4: conveyor moving product to the motor ----
+                    Rectangle {
+                        id: pipeToConveyor
+                        x: valve.x + valve.width
+                        y: pipeToValve.y
+                        width: 20
+                        height: 6
+                        color: pipeColor
+
+                        Rectangle {
+                            anchors.fill: parent
+                            color: "#2f81f7"
+                            opacity: processSim.valveOpen ? 0.7 : 0.15
+                        }
+                    }
+
+                    ConveyorIcon {
+                        id: conveyor
+                        x: pipeToConveyor.x + pipeToConveyor.width
+                        y: pipeToValve.y - 11
+                        width: mimic.width - x - 90
+                        height: 28
+                        speed: processSim.conveyorSpeed
+                    }
+
+                    Text {
+                        anchors.top: conveyor.bottom
+                        anchors.left: conveyor.left
+                        anchors.topMargin: 2
+                        text: "CONV C-101 · " + processSim.conveyorSpeed.toFixed(2) + " m/s"
+                        color: "#8a94a3"
+                        font.pixelSize: 9
+                    }
+
+                    // ---- Stage 5: motor driving the conveyor ----
+                    MotorIcon {
+                        id: motor
+                        x: conveyor.x + conveyor.width + 8
+                        y: pipeToValve.y - 24
+                        width: 52
+                        height: 52
+                        stateIndex: processSim.motorRunning ? 1 : 0
+                    }
+
+                    Text {
+                        anchors.top: motor.bottom
+                        anchors.horizontalCenter: motor.horizontalCenter
+                        text: "M-101\n" + (processSim.motorRunning ? "RUN" : "STOP")
+                        horizontalAlignment: Text.AlignHCenter
+                        color: processSim.motorRunning ? "#3ddc84" : "#5a6472"
+                        font.pixelSize: 9
+                        font.bold: true
+                    }
+
+                    // ---- Live values overlay ----
                     Column {
                         x: mimic.width - 180
                         y: mimic.height - 220
@@ -159,7 +270,7 @@ Window {
 
                         Rectangle {
                             width: 180
-                            height: 90
+                            height: 128
                             radius: 6
                             color: "#0d1116"
                             border.color: pipeColor
@@ -181,6 +292,13 @@ Window {
                                     font.pixelSize: 18
                                     font.bold: true
                                 }
+                                Text { text: "CONVEYOR SPEED"; color: "#8a94a3"; font.pixelSize: 10 }
+                                Text {
+                                    text: processSim.conveyorSpeed.toFixed(2) + " m/s"
+                                    color: "#f2f4f7"
+                                    font.pixelSize: 18
+                                    font.bold: true
+                                }
                             }
                         }
                     }
@@ -194,39 +312,10 @@ Window {
                 color: panelColor
                 border.color: "#2c3644"
 
-                Column {
+                AlarmAckPanel {
                     anchors.fill: parent
                     anchors.margins: 16
-                    spacing: 10
-
-                    Text { text: "Alarm history"; color: "#f2f4f7"; font.pixelSize: 14; font.bold: true }
-
-                    ListView {
-                        width: parent.width
-                        height: parent.height - 30
-                        clip: true
-                        model: alarmLog
-                        spacing: 6
-                        delegate: Rectangle {
-                            width: ListView.view.width
-                            height: 44
-                            radius: 4
-                            color: severity === 2 ? "#3a1d20" : (severity === 1 ? "#3a341a" : "#1d2733")
-                            border.color: severity === 2 ? "#e5484d" : (severity === 1 ? "#e5b93d" : "#2c3644")
-
-                            Column {
-                                anchors.verticalCenter: parent.verticalCenter
-                                anchors.left: parent.left
-                                anchors.leftMargin: 8
-                                Text { text: message; color: "#f2f4f7"; font.pixelSize: 11 }
-                                Text {
-                                    text: Qt.formatTime(timestamp, "hh:mm:ss")
-                                    color: "#8a94a3"
-                                    font.pixelSize: 9
-                                }
-                            }
-                        }
-                    }
+                    alarmModel: alarmLog
                 }
             }
         }
@@ -247,6 +336,17 @@ Window {
                 text: alarmLog.count > 0 ? "⚠ " + alarmLog.latestMessage : ""
                 color: "#f2f4f7"
                 font.pixelSize: 13
+                font.bold: true
+            }
+
+            Text {
+                anchors.verticalCenter: parent.verticalCenter
+                anchors.right: parent.right
+                anchors.rightMargin: 12
+                visible: alarmLog.unacknowledgedCount > 0
+                text: alarmLog.unacknowledgedCount + " unacknowledged"
+                color: "#e5b93d"
+                font.pixelSize: 11
                 font.bold: true
             }
         }

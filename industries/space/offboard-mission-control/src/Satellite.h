@@ -14,6 +14,10 @@ struct SatelliteState {
     double batteryPercent = 85.0;
     bool inEclipse = false;
     HealthSummary health = HealthSummary::Nominal;
+    double inclinationDeg = 53.0;
+    double orbitalPeriodMinutes = 95.0;
+    double latitudeDeg = 0.0;
+    double longitudeDeg = 0.0;
 };
 
 // Pure classification: combines battery level and eclipse duration risk into a

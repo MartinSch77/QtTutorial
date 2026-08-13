@@ -12,8 +12,20 @@ struct HaulTruckState {
     double payloadTonnes = 0.0;
     double engineTempC = 70.0;
     double retarderTempC = 40.0;
+    double speedKph = 0.0;
+    double fuelLtrPerHour = 0.0;
     std::array<double, 6> tyrePressuresKPa{};
+    std::array<double, 6> tyreTempsC{};
     bool overloaded = false;
+};
+
+// Plausible ground speed envelope for a given haul-cycle phase, used to flag a
+// truck running outside its expected performance envelope for that phase
+// (e.g. crawling while "hauling" would indicate a bogged-down or faulted
+// truck) without needing a full physics model.
+struct SpeedRangeKph {
+    double minKph = 0.0;
+    double maxKph = 0.0;
 };
 
 // Drives a repeating, physically plausible haul cycle (load, haul, dump, return)
@@ -45,7 +57,11 @@ public:
     [[nodiscard]] static double payloadAt(double phaseSeconds);
     [[nodiscard]] static double engineTempAt(double phaseSeconds);
     [[nodiscard]] static double retarderTempAt(double phaseSeconds);
+    [[nodiscard]] static double speedKphAt(double phaseSeconds);
+    [[nodiscard]] static double fuelLtrPerHourAt(double payloadTonnes, double speedKph);
     [[nodiscard]] static double tyrePressureAt(int wheelIndex, double payloadTonnes);
+    [[nodiscard]] static double tyreTempAt(int wheelIndex, double payloadTonnes);
+    [[nodiscard]] static SpeedRangeKph expectedSpeedRangeAt(HaulState state);
     [[nodiscard]] static bool isOverloaded(double payloadTonnes);
 
 private:

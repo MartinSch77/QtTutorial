@@ -42,6 +42,37 @@ double FieldPassSimulator::speedKphAt(bool engaged)
     return engaged ? kWorkingSpeedKph : kTurnSpeedKph;
 }
 
+double FieldPassSimulator::fuelPercentPerKmAt(double engineLoadPercent)
+{
+    return kFuelBaselinePercentPerKm + engineLoadPercent * kFuelPercentPerKmPerLoadPoint;
+}
+
+double FieldPassSimulator::yieldRateAt(bool engaged, double speedKph)
+{
+    if (!engaged) {
+        return 0.0;
+    }
+    return kYieldTonsPerHourAtWorkingSpeed * (speedKph / kWorkingSpeedKph);
+}
+
+int FieldPassSimulator::rowIndexForPass(int passNumber)
+{
+    const int zeroBased = std::max(0, passNumber - 1);
+    return zeroBased % kFieldRowCount;
+}
+
+bool FieldPassSimulator::isMovingForward(int rowIndex)
+{
+    return rowIndex % 2 == 0;
+}
+
+FieldPassSimulator::FieldPassSimulator(ImplementKind implementKind)
+{
+    m_state.implementKind = implementKind;
+    m_state.rowIndex = rowIndexForPass(m_state.passNumber);
+    m_state.movingForward = isMovingForward(m_state.rowIndex);
+}
+
 FieldPassState FieldPassSimulator::advance(double dtSeconds)
 {
     const double progressFraction = m_distanceInPassMeters / kPassLengthMeters;
@@ -65,8 +96,11 @@ FieldPassState FieldPassSimulator::advance(double dtSeconds)
     m_state.implementEngaged = engaged;
     m_state.workingDepthCm = workingDepthAt(engaged);
     m_state.engineLoadPercent = engineLoadAt(engaged, m_state.crossTrackErrorCm);
+    m_state.yieldRateTonsPerHour = yieldRateAt(engaged, speedKphAt(engaged));
+    m_state.rowIndex = rowIndexForPass(m_state.passNumber);
+    m_state.movingForward = isMovingForward(m_state.rowIndex);
 
-    const double fuelPercentPerKm = engaged ? kFuelPercentPerKmWorking : kFuelPercentPerKmIdle;
+    const double fuelPercentPerKm = fuelPercentPerKmAt(m_state.engineLoadPercent);
     m_fuelLevelPercent -= (distanceDeltaMeters / 1000.0) * fuelPercentPerKm;
     if (m_fuelLevelPercent <= 0.0) {
         m_fuelLevelPercent = 100.0;

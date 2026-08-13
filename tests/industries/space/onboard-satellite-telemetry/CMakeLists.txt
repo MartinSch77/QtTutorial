@@ -21,3 +21,9 @@ qttutorial_add_test(test_subsystem_health_machine
     LIB satellite_telemetry_lib
     QT_LIBS Qt6::Core Qt6::StateMachine
 )
+
+qttutorial_add_test(test_ground_track_simulator
+    SOURCES test_ground_track_simulator.cpp
+    LIB satellite_telemetry_lib
+    QT_LIBS Qt6::Core
+)

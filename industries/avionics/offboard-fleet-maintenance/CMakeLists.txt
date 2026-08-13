@@ -8,6 +8,8 @@ add_library(fleet_maintenance_lib STATIC
     src/FleetSimulator.cpp
     src/FlightHistoryStore.h
     src/FlightHistoryStore.cpp
+    src/InspectionScheduler.h
+    src/InspectionScheduler.cpp
 )
 target_include_directories(fleet_maintenance_lib PUBLIC src)
 target_link_libraries(fleet_maintenance_lib PUBLIC Qt6::Core Qt6::Sql)
@@ -23,5 +25,7 @@ qttutorial_add_app(offboard_fleet_maintenance
         src/FleetTableModel.cpp
         src/TrendWidget.h
         src/TrendWidget.cpp
+        src/MaintenanceOverviewWidget.h
+        src/MaintenanceOverviewWidget.cpp
     QT_LIBS Qt6::Widgets Qt6::Sql fleet_maintenance_lib
 )

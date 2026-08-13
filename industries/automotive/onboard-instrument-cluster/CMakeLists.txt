@@ -20,4 +20,9 @@ qttutorial_add_app(onboard_instrument_cluster
         src/qml/Main.qml
         src/qml/Gauge.qml
         src/qml/AdasStrip.qml
+        src/qml/GearSelector.qml
+        src/qml/TurnSignalArrow.qml
+        src/qml/FuelGauge.qml
+        src/qml/TirePressurePanel.qml
+        src/qml/DrivingModeSelector.qml
 )

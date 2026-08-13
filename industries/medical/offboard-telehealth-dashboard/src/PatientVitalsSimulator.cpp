@@ -16,6 +16,8 @@ const std::array<const char*, 5> kNames = {
     "A. Rossi", "B. Nguyen", "C. Diaz", "D. Kim", "E. Okafor",
 };
 
+constexpr double kFeverPeriodSeconds = 150.0;
+
 double episodeSeverity(int patientIndex, double elapsedSeconds)
 {
     if (patientIndex != 0) {
@@ -34,20 +36,50 @@ double episodeSeverity(int patientIndex, double elapsedSeconds)
     return 1.0 - (phase - 65.0) / 10.0;
 }
 
+// A fever episode, distinct from the desaturation event above: only patient
+// index 1 runs it, on a longer, offset cycle, so the two scenarios never
+// coincide.
+double feverSeverity(int patientIndex, double elapsedSeconds)
+{
+    if (patientIndex != 1) {
+        return 0.0;
+    }
+    const double phase = std::fmod(elapsedSeconds, kFeverPeriodSeconds);
+    if (phase < 100.0 || phase >= 140.0) {
+        return 0.0;
+    }
+    if (phase < 110.0) {
+        return (phase - 100.0) / 10.0;
+    }
+    if (phase < 125.0) {
+        return 1.0;
+    }
+    return 1.0 - (phase - 125.0) / 15.0;
+}
+
 } // namespace
 
 PatientVitals PatientVitalsSimulator::sampleAt(int patientIndex, double elapsedSeconds)
 {
     const double offset = static_cast<double>(patientIndex) * 17.0;
-    const double severity = episodeSeverity(patientIndex, elapsedSeconds);
+    const double desatSeverity = episodeSeverity(patientIndex, elapsedSeconds);
+    const double feverSev = feverSeverity(patientIndex, elapsedSeconds);
 
     PatientVitals vitals;
     vitals.id = QStringLiteral("PT-%1").arg(patientIndex + 1, 2, 10, QLatin1Char('0'));
     vitals.name = QString::fromLatin1(kNames[static_cast<std::size_t>(patientIndex) % kNames.size()]);
-    vitals.heartRate = 70.0 + 5.0 * std::sin(kTwoPi * (elapsedSeconds + offset) / 12.0) + severity * 50.0;
-    vitals.spo2 = 97.0 + 1.0 * std::sin(kTwoPi * (elapsedSeconds + offset) / 50.0) - severity * 9.0;
-    vitals.systolic = 118.0 + 6.0 * std::sin(kTwoPi * (elapsedSeconds + offset) / 70.0) + severity * 10.0;
+    vitals.heartRate = 70.0 + 5.0 * std::sin(kTwoPi * (elapsedSeconds + offset) / 12.0) + desatSeverity * 50.0
+        + feverSev * 15.0;
+    vitals.spo2 = 97.0 + 1.0 * std::sin(kTwoPi * (elapsedSeconds + offset) / 50.0) - desatSeverity * 9.0;
+    vitals.systolic = 118.0 + 6.0 * std::sin(kTwoPi * (elapsedSeconds + offset) / 70.0) + desatSeverity * 10.0;
     vitals.diastolic = vitals.systolic * 0.64;
+    // Desaturation plausibly correlates with faster, more laboured
+    // breathing; fever contributes a smaller respiratory-rate rise too.
+    vitals.respirationRate = 16.0 + 1.5 * std::sin(kTwoPi * (elapsedSeconds + offset) / 20.0) + desatSeverity * 10.0
+        + feverSev * 4.0;
+    // Fever correlates elevated temperature with the heart-rate/respiration
+    // rise modelled above; a desaturation event alone does not raise it.
+    vitals.temperature = 37.0 + 0.15 * std::sin(kTwoPi * (elapsedSeconds + offset) / 300.0) + feverSev * 1.7;
     return vitals;
 }
 

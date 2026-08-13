@@ -1,6 +1,7 @@
 // SPDX-License-Identifier: MIT
 #pragma once
 
+#include "DataLinkTrackModel.h"
 #include "DetectionSimulator.h"
 #include "HudSimulator.h"
 #include "SubsystemHealthMachine.h"
@@ -36,6 +37,8 @@ class PlatformSimulator : public QObject {
     Q_PROPERTY(double hudHeadingDeg READ hudHeadingDeg NOTIFY dataChanged)
     Q_PROPERTY(QVariantList waypoints READ waypoints NOTIFY dataChanged)
     Q_PROPERTY(QVariantList teammates READ teammates NOTIFY dataChanged)
+    Q_PROPERTY(QVariantList dataLinkTracks READ dataLinkTracks NOTIFY dataChanged)
+    Q_PROPERTY(double commsQualityPercent READ commsQualityPercent NOTIFY dataChanged)
 public:
     explicit PlatformSimulator(QObject* parent = nullptr);
 
@@ -49,6 +52,8 @@ public:
     [[nodiscard]] double hudHeadingDeg() const { return m_hudSimulator.headingDeg(); }
     [[nodiscard]] QVariantList waypoints() const;
     [[nodiscard]] QVariantList teammates() const;
+    [[nodiscard]] QVariantList dataLinkTracks() const;
+    [[nodiscard]] double commsQualityPercent() const { return m_commsQualityPercent; }
 
 signals:
     void dataChanged();
@@ -61,10 +66,12 @@ private:
     VehicleStatusSimulator m_vehicleStatus;
     DetectionSimulator m_detectionSimulator;
     HudSimulator m_hudSimulator;
+    DataLinkTrackModel m_dataLinkModel;
     std::vector<std::unique_ptr<SubsystemHealthMachine>> m_subsystemMachines;
     QVariantList m_subsystems;
     QTimer m_timer;
     double m_elapsedSeconds = 0.0;
+    double m_commsQualityPercent = 100.0;
 };
 
 } // namespace qttutorial::defence

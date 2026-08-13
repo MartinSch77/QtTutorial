@@ -21,4 +21,9 @@ qttutorial_add_app(mining_onboard_haul_truck_console
         src/qml/Gauge.qml
         src/qml/HaulStateStrip.qml
         src/qml/TyrePressureGrid.qml
+        src/qml/TyreIcon.qml
+        src/qml/HaulTruckIcon.qml
+        src/qml/PayloadScaleIcon.qml
+        src/qml/PitIcon.qml
+        src/qml/WarningTriangleIcon.qml
 )

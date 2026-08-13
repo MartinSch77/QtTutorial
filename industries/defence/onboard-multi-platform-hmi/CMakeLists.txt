@@ -13,6 +13,8 @@ add_library(defence_onboard_lib STATIC
     src/DetectionSimulator.cpp
     src/HudSimulator.h
     src/HudSimulator.cpp
+    src/DataLinkTrackModel.h
+    src/DataLinkTrackModel.cpp
 )
 target_include_directories(defence_onboard_lib PUBLIC src)
 target_link_libraries(defence_onboard_lib PUBLIC Qt6::Core Qt6::StateMachine)
@@ -33,4 +35,6 @@ qttutorial_add_app(onboard_multi_platform_hmi
         src/qml/TrackDisplayPanel.qml
         src/qml/DetectionPanel.qml
         src/qml/HudPanel.qml
+        src/qml/CommsStatusPanel.qml
+        src/qml/Icons.js
 )

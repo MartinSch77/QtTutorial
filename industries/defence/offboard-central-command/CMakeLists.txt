@@ -9,6 +9,10 @@ add_library(central_command_lib STATIC
     src/FleetSimulator.cpp
     src/AssetHistoryStore.h
     src/AssetHistoryStore.cpp
+    src/CommsLinkQualityModel.h
+    src/CommsLinkQualityModel.cpp
+    src/FleetReadiness.h
+    src/FleetReadiness.cpp
 )
 target_include_directories(central_command_lib PUBLIC src)
 target_link_libraries(central_command_lib PUBLIC Qt6::Core Qt6::Sql)
@@ -24,5 +28,7 @@ qttutorial_add_app(offboard_central_command
         src/AssetTableModel.cpp
         src/TacticalMapWidget.h
         src/TacticalMapWidget.cpp
+        src/FleetReadinessBoard.h
+        src/FleetReadinessBoard.cpp
     QT_LIBS Qt6::Widgets Qt6::Sql central_command_lib
 )

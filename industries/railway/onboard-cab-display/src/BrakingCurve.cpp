@@ -20,4 +20,13 @@ double maxSafeSpeedKmh(double distanceToRestrictionM, double targetSpeedKmh, dou
     return maxMs * kMsToKmh;
 }
 
+bool nextBrakeWarningState(bool currentlyActive, double speedKmh, double permittedSpeedKmh, double onMarginKmh,
+                            double offMarginKmh)
+{
+    if (currentlyActive) {
+        return speedKmh > permittedSpeedKmh + offMarginKmh;
+    }
+    return speedKmh > permittedSpeedKmh + onMarginKmh;
+}
+
 } // namespace qttutorial::cab_display

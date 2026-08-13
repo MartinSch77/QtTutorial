@@ -13,6 +13,8 @@ add_library(offboard_remote_access_app_lib STATIC
     src/HomeLinkServer.cpp
     src/HomeLinkClient.h
     src/HomeLinkClient.cpp
+    src/EnergyMonitor.h
+    src/EnergyMonitor.cpp
 )
 target_include_directories(offboard_remote_access_app_lib PUBLIC src)
 target_link_libraries(offboard_remote_access_app_lib PUBLIC Qt6::Core Qt6::Network Qt6::Sql)
@@ -33,4 +35,10 @@ qttutorial_add_app(offboard_remote_access_app
         src/qml/RemoteRoomRow.qml
         src/qml/RemoteLockRow.qml
         src/qml/RemoteSensorChip.qml
+        src/qml/LightbulbIcon.qml
+        src/qml/LockIcon.qml
+        src/qml/DoorSensorIcon.qml
+        src/qml/ThermostatIcon.qml
+        src/qml/ActivityIcon.qml
+        src/qml/EnergyPanel.qml
 )

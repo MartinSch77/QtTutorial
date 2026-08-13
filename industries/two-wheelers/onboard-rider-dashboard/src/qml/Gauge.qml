@@ -13,12 +13,18 @@ Item {
     property string label: ""
     property string unit: ""
     property color accentColor: "#39c0ff"
+    // Fraction (0-1) of the sweep at which a redline zone begins; 1 (the
+    // default) disables it. Used for the rev counter, the way a real
+    // sport-bike tacho paints its last ~15-20% of travel red.
+    property real redlineStart: 1.0
+    property color redlineColor: "#ff3b30"
 
     readonly property real startAngle: 135 * Math.PI / 180
     readonly property real sweepAngle: 270 * Math.PI / 180
     readonly property real fraction: Math.max(0, Math.min(1, (value - minValue) / (maxValue - minValue)))
 
     onValueChanged: canvas.requestPaint()
+    onRedlineStartChanged: canvas.requestPaint()
 
     Canvas {
         id: canvas
@@ -37,10 +43,29 @@ Item {
             ctx.arc(cx, cy, radius, root.startAngle, root.startAngle + root.sweepAngle, false);
             ctx.stroke();
 
+            if (root.redlineStart < 1.0) {
+                ctx.strokeStyle = root.redlineColor;
+                ctx.globalAlpha = 0.3;
+                ctx.beginPath();
+                ctx.arc(cx, cy, radius, root.startAngle + root.sweepAngle * root.redlineStart,
+                        root.startAngle + root.sweepAngle, false);
+                ctx.stroke();
+                ctx.globalAlpha = 1.0;
+            }
+
+            const accentEnd = Math.min(root.fraction, root.redlineStart);
             ctx.strokeStyle = root.accentColor;
             ctx.beginPath();
-            ctx.arc(cx, cy, radius, root.startAngle, root.startAngle + root.sweepAngle * root.fraction, false);
+            ctx.arc(cx, cy, radius, root.startAngle, root.startAngle + root.sweepAngle * accentEnd, false);
             ctx.stroke();
+
+            if (root.fraction > root.redlineStart) {
+                ctx.strokeStyle = root.redlineColor;
+                ctx.beginPath();
+                ctx.arc(cx, cy, radius, root.startAngle + root.sweepAngle * root.redlineStart,
+                        root.startAngle + root.sweepAngle * root.fraction, false);
+                ctx.stroke();
+            }
 
             const needleAngle = root.startAngle + root.sweepAngle * root.fraction;
             ctx.lineWidth = 3;

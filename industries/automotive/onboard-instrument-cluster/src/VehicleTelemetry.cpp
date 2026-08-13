@@ -1,6 +1,8 @@
 // SPDX-License-Identifier: MIT
 #include "VehicleTelemetry.h"
 
+#include <algorithm>
+
 namespace qttutorial::automotive {
 
 VehicleTelemetry::VehicleTelemetry(QObject* parent)
@@ -39,6 +41,54 @@ QString VehicleTelemetry::gearLabel() const
         return QStringLiteral("D6");
     }
     return QStringLiteral("P");
+}
+
+void VehicleTelemetry::setDrivingMode(int mode)
+{
+    const auto clamped = std::clamp(mode, 0, 2);
+    const auto newMode = static_cast<DrivingMode>(clamped);
+    if (newMode == m_simulator.drivingMode()) {
+        return;
+    }
+    m_simulator.setDrivingMode(newMode);
+    m_state.drivingMode = newMode;
+    emit telemetryChanged();
+}
+
+QString VehicleTelemetry::drivingModeLabel() const
+{
+    switch (m_state.drivingMode) {
+    case DrivingMode::Eco:
+        return QStringLiteral("ECO");
+    case DrivingMode::Sport:
+        return QStringLiteral("SPORT");
+    case DrivingMode::Comfort:
+    default:
+        return QStringLiteral("COMFORT");
+    }
+}
+
+QColor VehicleTelemetry::drivingModeAccentColor() const
+{
+    switch (m_state.drivingMode) {
+    case DrivingMode::Eco:
+        return QColor("#3ddc6f");
+    case DrivingMode::Sport:
+        return QColor("#ff4b5c");
+    case DrivingMode::Comfort:
+    default:
+        return QColor("#39c0ff");
+    }
+}
+
+QVariantList VehicleTelemetry::tirePressures() const
+{
+    QVariantList list;
+    list.reserve(static_cast<int>(m_state.tirePressureKpa.size()));
+    for (const double pressure : m_state.tirePressureKpa) {
+        list.append(pressure);
+    }
+    return list;
 }
 
 } // namespace qttutorial::automotive

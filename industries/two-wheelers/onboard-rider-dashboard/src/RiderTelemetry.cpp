@@ -39,4 +39,22 @@ QString RiderTelemetry::gearLabel() const
     return QStringLiteral("N");
 }
 
+QString RiderTelemetry::ridingModeLabel() const
+{
+    return QString::fromLatin1(::qttutorial::two_wheelers::ridingModeLabel(m_state.mode));
+}
+
+double RiderTelemetry::fuelPercent() const
+{
+    return 100.0 * m_state.fuelLitres / RideState::kFuelTankCapacityLitres;
+}
+
+void RiderTelemetry::setRidingMode(int modeIndex)
+{
+    if (modeIndex < static_cast<int>(RidingMode::Rain) || modeIndex > static_cast<int>(RidingMode::Race)) {
+        return;
+    }
+    m_simulator.setRidingMode(static_cast<RidingMode>(modeIndex));
+}
+
 } // namespace qttutorial::two_wheelers

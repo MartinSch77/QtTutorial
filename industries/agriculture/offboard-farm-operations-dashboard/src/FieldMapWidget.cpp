@@ -1,6 +1,8 @@
 // SPDX-License-Identifier: MIT
 #include "FieldMapWidget.h"
 
+#include "FarmIconPainter.h"
+
 #include <QPainter>
 #include <QRectF>
 
@@ -66,9 +68,8 @@ void FieldMapWidget::paintEvent(QPaintEvent* /*event*/)
     const double fraction = std::clamp(m_coveragePercent / 100.0, 0.0, 1.0);
     const QPointF marker = pointOnRectanglePerimeter(fieldRect, fraction);
 
-    painter.setPen(Qt::NoPen);
-    painter.setBrush(QColor("#e5b93d"));
-    painter.drawEllipse(marker, 8.0, 8.0);
+    const QRectF markerRect(marker.x() - 14.0, marker.y() - 14.0, 28.0, 28.0);
+    icons::paintTractorGlyph(painter, markerRect, QColor("#e5b93d"));
 }
 
 } // namespace qttutorial::agriculture::ops

@@ -20,5 +20,11 @@ qttutorial_add_app(offboard_telehealth_dashboard
         src/MainWindow.cpp
         src/SparklineDelegate.h
         src/SparklineDelegate.cpp
+        src/IconPainter.h
+        src/IconPainter.cpp
+        src/PatientOverviewWidget.h
+        src/PatientOverviewWidget.cpp
+        src/TrendChartWidget.h
+        src/TrendChartWidget.cpp
     QT_LIBS Qt6::Widgets Qt6::Sql offboard_telehealth_dashboard_lib
 )

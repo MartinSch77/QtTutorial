@@ -30,6 +30,7 @@ Window {
         TabButton { text: qsTr("Sensor Track Display") }
         TabButton { text: qsTr("Drone Object Detection") }
         TabButton { text: qsTr("AR HUD Overlay") }
+        TabButton { text: qsTr("Comms & Data Link") }
     }
 
     Item {
@@ -43,5 +44,6 @@ Window {
         TrackDisplayPanel { anchors.fill: parent; sim: sim; visible: tabBar.currentIndex === 1 }
         DetectionPanel { anchors.fill: parent; sim: sim; visible: tabBar.currentIndex === 2 }
         HudPanel { anchors.fill: parent; sim: sim; visible: tabBar.currentIndex === 3 }
+        CommsStatusPanel { anchors.fill: parent; sim: sim; visible: tabBar.currentIndex === 4 }
     }
 }

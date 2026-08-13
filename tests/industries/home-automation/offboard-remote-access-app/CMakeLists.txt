@@ -15,3 +15,9 @@ qttutorial_add_test(test_activity_log_store
     LIB offboard_remote_access_app_lib
     QT_LIBS Qt6::Core Qt6::Sql
 )
+
+qttutorial_add_test(test_energy_monitor
+    SOURCES test_energy_monitor.cpp
+    LIB offboard_remote_access_app_lib
+    QT_LIBS Qt6::Core
+)

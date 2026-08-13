@@ -25,14 +25,25 @@ Rectangle {
 
         Row {
             width: parent.width
+            spacing: 8
+
+            LightbulbIcon {
+                width: 22
+                height: 22
+                anchors.verticalCenter: parent.verticalCenter
+                on: root.lightOn
+                brightness: root.brightness
+            }
             Text {
-                width: parent.width - 60
+                width: parent.width - 88
+                anchors.verticalCenter: parent.verticalCenter
                 text: root.roomName
                 color: "#e6edf3"
                 font.pixelSize: 18
                 font.bold: true
             }
             ToggleSwitch {
+                anchors.verticalCenter: parent.verticalCenter
                 checked: root.lightOn
                 onColor: "#f4c860"
                 onToggled: root.toggled(checked)

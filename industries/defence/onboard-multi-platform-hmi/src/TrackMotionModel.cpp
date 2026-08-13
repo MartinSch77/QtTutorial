@@ -25,13 +25,13 @@ TrackSimulator::TrackSimulator(double areaRadiusKm)
 
 void TrackSimulator::seedTracks()
 {
-    const struct { const char* classification; double xKm; double yKm; double headingDeg; double speedKmh;
-                   double turnRateDegPerSec; } seeds[] = {
-        {"Fixed-wing", -20.0, 10.0, 90.0, 480.0, 0.0},
-        {"Rotary-wing", 15.0, -8.0, 210.0, 160.0, 1.5},
-        {"Surface vessel", -5.0, -25.0, 45.0, 32.0, -0.4},
-        {"Unknown contact", 28.0, 18.0, 260.0, 90.0, 2.2},
-        {"Fixed-wing", 0.0, 30.0, 180.0, 520.0, -1.1},
+    const struct { const char* classification; const char* domain; double xKm; double yKm; double headingDeg;
+                   double speedKmh; double turnRateDegPerSec; } seeds[] = {
+        {"Fixed-wing", "Air", -20.0, 10.0, 90.0, 480.0, 0.0},
+        {"Rotary-wing", "Air", 15.0, -8.0, 210.0, 160.0, 1.5},
+        {"Surface vessel", "Surface", -5.0, -25.0, 45.0, 32.0, -0.4},
+        {"Unknown contact", "Ground", 28.0, 18.0, 260.0, 90.0, 2.2},
+        {"Fixed-wing", "Air", 0.0, 30.0, 180.0, 520.0, -1.1},
     };
 
     m_tracks.clear();
@@ -41,6 +41,7 @@ void TrackSimulator::seedTracks()
         Track track;
         track.id = id++;
         track.classification = QString::fromLatin1(seed.classification);
+        track.domain = QString::fromLatin1(seed.domain);
         track.xKm = seed.xKm;
         track.yKm = seed.yKm;
         track.headingDeg = seed.headingDeg;

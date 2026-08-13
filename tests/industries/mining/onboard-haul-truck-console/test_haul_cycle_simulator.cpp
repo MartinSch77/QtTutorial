@@ -84,6 +84,77 @@ private slots:
     {
         QVERIFY(HaulCycleSimulator::retarderTempAt(190.0) < HaulCycleSimulator::retarderTempAt(140.0));
     }
+
+    void tyreTempRisesWithPayload()
+    {
+        // Heavier payload should drive a faster, higher tyre-temperature rise
+        // for the same wheel: the whole point of correlating tyre heat with
+        // load rather than varying it independently.
+        const double coolTemp = HaulCycleSimulator::tyreTempAt(0, 0.0);
+        const double hotTemp = HaulCycleSimulator::tyreTempAt(0, HaulCycleSimulator::kRatedCapacityTonnes);
+        QVERIFY(hotTemp > coolTemp);
+    }
+
+    void rearTyresRunHotterThanFrontAtTheSamePayload()
+    {
+        const double frontTemp = HaulCycleSimulator::tyreTempAt(0, HaulCycleSimulator::kRatedCapacityTonnes);
+        const double rearTemp = HaulCycleSimulator::tyreTempAt(2, HaulCycleSimulator::kRatedCapacityTonnes);
+        QVERIFY(rearTemp > frontTemp);
+    }
+
+    void speedIsLowWhileLoadingAndCruisesWhileHauling()
+    {
+        QVERIFY(HaulCycleSimulator::speedKphAt(15.0) < HaulCycleSimulator::speedKphAt(60.0));
+        QCOMPARE(HaulCycleSimulator::speedKphAt(60.0), 45.0);
+    }
+
+    void speedDropsDescendingIntoTheDumpPointAndIsZeroWhileDumping()
+    {
+        QVERIFY(HaulCycleSimulator::speedKphAt(115.0) < HaulCycleSimulator::speedKphAt(60.0));
+        QCOMPARE(HaulCycleSimulator::speedKphAt(130.0), 0.0);
+    }
+
+    void speedRampsUpEmptyWhileReturning()
+    {
+        QVERIFY(HaulCycleSimulator::speedKphAt(140.0) < HaulCycleSimulator::speedKphAt(145.0));
+    }
+
+    void fuelBurnIncreasesWithPayloadAtFixedSpeed()
+    {
+        const double emptyFuel = HaulCycleSimulator::fuelLtrPerHourAt(0.0, 45.0);
+        const double loadedFuel = HaulCycleSimulator::fuelLtrPerHourAt(HaulCycleSimulator::kRatedCapacityTonnes, 45.0);
+        QVERIFY(loadedFuel > emptyFuel);
+    }
+
+    void fuelBurnIncreasesWithSpeedAtFixedPayload()
+    {
+        const double slowFuel = HaulCycleSimulator::fuelLtrPerHourAt(100.0, 10.0);
+        const double fastFuel = HaulCycleSimulator::fuelLtrPerHourAt(100.0, 55.0);
+        QVERIFY(fastFuel > slowFuel);
+    }
+
+    void expectedSpeedRangeIsNarrowestWhileLoadingAndWidestWhileHauling()
+    {
+        const SpeedRangeKph loadingRange = HaulCycleSimulator::expectedSpeedRangeAt(HaulState::Loading);
+        const SpeedRangeKph haulingRange = HaulCycleSimulator::expectedSpeedRangeAt(HaulState::Hauling);
+        QVERIFY(loadingRange.maxKph < haulingRange.maxKph);
+        QVERIFY(haulingRange.minKph > 0.0);
+    }
+
+    void advanceKeepsSpeedFuelAndTyreTempsWithinSaneBounds()
+    {
+        HaulCycleSimulator sim;
+        for (int i = 0; i < static_cast<int>(HaulCycleSimulator::kCyclePeriodSeconds); ++i) {
+            const HaulTruckState state = sim.advance(1.0);
+            QVERIFY(state.speedKph >= 0.0);
+            QVERIFY(state.speedKph <= 70.0);
+            QVERIFY(state.fuelLtrPerHour > 0.0);
+            for (const double temp : state.tyreTempsC) {
+                QVERIFY(temp >= 50.0);
+                QVERIFY(temp <= 100.0);
+            }
+        }
+    }
 };
 
 QTEST_MAIN(TestHaulCycleSimulator)

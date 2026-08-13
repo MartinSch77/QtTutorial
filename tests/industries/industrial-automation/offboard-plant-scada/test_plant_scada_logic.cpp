@@ -1,10 +1,14 @@
 // SPDX-License-Identifier: MIT
 #include "AlarmEvaluator.h"
 #include "Historian.h"
+#include "PlantOverviewModel.h"
 #include "ProcessPointSimulator.h"
 #include "TagTableModel.h"
 
 #include <QTest>
+
+#include <algorithm>
+#include <cmath>
 
 using namespace qttutorial::plant_scada;
 
@@ -25,6 +29,81 @@ private slots:
             QVERIFY(value >= tag.baseValue - tag.amplitude - 1e-9);
             QVERIFY(value <= tag.baseValue + tag.amplitude + 1e-9);
         }
+    }
+
+    void gatedTagFallsToResidualWhileItsLineIsStopped()
+    {
+        // MZ301.MOTOR_SPEED is gated: whenever Line 2 is stopped, the reading
+        // should be near zero (a small residual) rather than continuing to
+        // oscillate around its running baseline.
+        const TagDefinition tag = defaultTags()[3];
+        QCOMPARE(tag.tagId, QStringLiteral("MZ301.MOTOR_SPEED"));
+        QVERIFY(tag.gatedByLineRunning);
+
+        bool sawStopped = false;
+        for (double t = 0.0; t < 480.0 && !sawStopped; t += 1.0) {
+            if (!lineRunningAt(tag.line, t)) {
+                sawStopped = true;
+                const double value = valueAt(tag, t);
+                QVERIFY(std::abs(value) < tag.baseValue * 0.1);
+            }
+        }
+        QVERIFY(sawStopped);
+    }
+
+    void ungatedTagKeepsOscillatingRegardlessOfLineState()
+    {
+        // PT301.PRESSURE is not gated, so it should keep varying by roughly
+        // its normal amplitude even while Line 2 happens to be stopped.
+        const TagDefinition tag = defaultTags()[2];
+        QCOMPARE(tag.tagId, QStringLiteral("PT301.PRESSURE"));
+        QVERIFY(!tag.gatedByLineRunning);
+
+        for (double t = 0.0; t < 480.0; t += 5.0) {
+            const double value = valueAt(tag, t);
+            QVERIFY(value >= tag.baseValue - tag.amplitude - 1e-9);
+            QVERIFY(value <= tag.baseValue + tag.amplitude + 1e-9);
+        }
+    }
+
+    void summarizeLinesGroupsByLineAndTracksRunningAndSeverity()
+    {
+        std::vector<TagDefinition> tags = defaultTags();
+        // Force the Line 1 flow reading well above its running threshold and
+        // above its critical limit, and leave everything else at baseline.
+        std::vector<double> values;
+        for (const TagDefinition& tag : tags) {
+            values.push_back(tag.baseValue);
+        }
+        values[1] = tags[1].criticalHigh + 1.0; // FT201.FLOW, Line 1
+
+        const auto lines = summarizeLines(tags, values);
+        QCOMPARE(lines.size(), lineNames().size());
+
+        const auto line1 = std::find_if(lines.begin(), lines.end(),
+                                         [](const LineStatus& s) { return s.line == QStringLiteral("Line 1 - Filling"); });
+        QVERIFY(line1 != lines.end());
+        QVERIFY(line1->running);
+        QCOMPARE(line1->worstSeverity, Severity::Critical);
+
+        const auto line2 = std::find_if(lines.begin(), lines.end(),
+                                         [](const LineStatus& s) { return s.line == QStringLiteral("Line 2 - Reaction"); });
+        QVERIFY(line2 != lines.end());
+        QCOMPARE(line2->worstSeverity, Severity::Normal);
+    }
+
+    void plantOverviewModelExposesLineRoles()
+    {
+        std::vector<TagDefinition> tags = defaultTags();
+        std::vector<double> values;
+        for (const TagDefinition& tag : tags) {
+            values.push_back(tag.baseValue);
+        }
+
+        PlantOverviewModel model;
+        model.update(tags, values);
+        QCOMPARE(model.rowCount(), static_cast<int>(lineNames().size()));
+        QVERIFY(!model.data(model.index(0, 0), PlantOverviewModel::LineNameRole).toString().isEmpty());
     }
 
     void evaluateClassifiesSeverityByLimits()

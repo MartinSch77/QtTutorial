@@ -109,20 +109,72 @@ double RideCycleSimulator::tyrePressureForTemp(double tyreTempC, bool isRearTyre
     return basePressure + (tyreTempC - kBaselineTempC) * kPressurePerDegree;
 }
 
+double RideCycleSimulator::speedTimeConstantSecondsForMode(RidingMode mode)
+{
+    switch (mode) {
+    case RidingMode::Rain:
+        return 2.6;
+    case RidingMode::Road:
+        return 1.5;
+    case RidingMode::Sport:
+        return 1.0;
+    case RidingMode::Race:
+        return 0.6;
+    }
+    return 1.5;
+}
+
+double RideCycleSimulator::leanAngleFactorForMode(RidingMode mode)
+{
+    switch (mode) {
+    case RidingMode::Rain:
+        return 0.55;
+    case RidingMode::Road:
+        return 0.85;
+    case RidingMode::Sport:
+        return 1.0;
+    case RidingMode::Race:
+        return 1.05;
+    }
+    return 0.85;
+}
+
+double RideCycleSimulator::fuelBurnRateLitresPerHour(double rpm, RidingMode mode)
+{
+    constexpr double kIdleBurnLitresPerHour = 0.4;
+    constexpr double kBurnPerRpm = 0.00045;
+    double modeFactor = 1.0;
+    switch (mode) {
+    case RidingMode::Rain:
+        modeFactor = 0.85;
+        break;
+    case RidingMode::Road:
+        modeFactor = 1.0;
+        break;
+    case RidingMode::Sport:
+        modeFactor = 1.2;
+        break;
+    case RidingMode::Race:
+        modeFactor = 1.5;
+        break;
+    }
+    return (kIdleBurnLitresPerHour + rpm * kBurnPerRpm) * modeFactor;
+}
+
 RideState RideCycleSimulator::advance(double dtSeconds)
 {
     m_elapsedSeconds += dtSeconds;
     const double phase = std::fmod(m_elapsedSeconds, kCyclePeriodSeconds);
 
     const double targetSpeed = targetSpeedAt(phase);
-    constexpr double kSpeedTimeConstantSeconds = 1.5;
-    const double speedAlpha = 1.0 - std::exp(-dtSeconds / kSpeedTimeConstantSeconds);
+    const double speedTimeConstant = speedTimeConstantSecondsForMode(m_state.mode);
+    const double speedAlpha = 1.0 - std::exp(-dtSeconds / speedTimeConstant);
     m_state.speedKph += (targetSpeed - m_state.speedKph) * speedAlpha;
 
     m_state.gear = gearForSpeed(m_state.speedKph);
     m_state.rpm = rpmForSpeedAndGear(m_state.speedKph, m_state.gear);
 
-    const double targetLean = leanAngleAt(phase, m_state.speedKph);
+    const double targetLean = leanAngleAt(phase, m_state.speedKph) * leanAngleFactorForMode(m_state.mode);
     constexpr double kLeanTimeConstantSeconds = 0.8;
     const double leanAlpha = 1.0 - std::exp(-dtSeconds / kLeanTimeConstantSeconds);
     m_state.leanAngleDeg += (targetLean - m_state.leanAngleDeg) * leanAlpha;
@@ -137,7 +189,25 @@ RideState RideCycleSimulator::advance(double dtSeconds)
     m_state.frontTyrePressureBar = tyrePressureForTemp(m_state.frontTyreTempC, false);
     m_state.rearTyrePressureBar = tyrePressureForTemp(m_state.rearTyreTempC, true);
 
+    const double burnRateLitresPerHour = fuelBurnRateLitresPerHour(m_state.rpm, m_state.mode);
+    m_state.fuelLitres = std::max(0.0, m_state.fuelLitres - burnRateLitresPerHour * dtSeconds / 3600.0);
+
     return m_state;
+}
+
+const char* ridingModeLabel(RidingMode mode)
+{
+    switch (mode) {
+    case RidingMode::Rain:
+        return "Rain";
+    case RidingMode::Road:
+        return "Road";
+    case RidingMode::Sport:
+        return "Sport";
+    case RidingMode::Race:
+        return "Race";
+    }
+    return "Road";
 }
 
 } // namespace qttutorial::two_wheelers

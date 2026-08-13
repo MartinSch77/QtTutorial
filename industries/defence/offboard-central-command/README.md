@@ -37,6 +37,20 @@ computation, or munitions trajectory/aiming logic.
   `AssetHistoryStore` writes and reads exclusively through
   `QSqlQuery::prepare`/`bindValue`, following the same pattern as
   `industries/space/offboard-mission-control/src/TelemetryHistoryStore`.
+- **A second, independent simulated fault.** `CommsLinkQualityModel` +
+  `FleetSimulator` model a per-asset comms-link quality that, when it
+  degrades, makes that asset's displayed position/heading freeze and age
+  rather than update every tick — a data-quality effect only, distinct
+  from the health-drift fault, surfaced on the tactical map (dashed
+  outline, warning-triangle glyph, antenna glyph) and in the asset table's
+  Data Link column.
+- **A fleet-readiness summary board.** `FleetReadiness::summarizeReadiness`
+  is a small, pure counting function (unit-tested independent of Qt
+  Widgets); `FleetReadinessBoard` renders it as three green/amber/red tiles
+  with a procedurally-drawn shield glyph per tile.
+- **A severity-filterable alert log.** `AlertLog::alertsBySeverity(minimumSeverity)`
+  filters the same Critical-first ordering to a chosen minimum severity,
+  backing a filter dropdown above the dashboard's alert list.
 - **The offboard characteristic.** Table/map/log oriented, persists to
   SQLite, aggregates a mixed fleet rather than representing a single
   platform's onboard displays — the kind of system that runs in a command

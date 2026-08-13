@@ -52,6 +52,9 @@ QVariant FieldOperationsModel::data(const QModelIndex& index, int role) const
         return QStringLiteral("%1 %").arg(sample.coveragePercent, 0, 'f', 1);
     case StatusColumn:
         return sample.status;
+    case JobStatusColumn:
+        return QStringLiteral("%1 (%2/%3 passes)")
+            .arg(sample.overallStatus, QString::number(sample.passNumber), QString::number(sample.plannedPasses));
     default:
         return {};
     }
@@ -71,6 +74,8 @@ QVariant FieldOperationsModel::headerData(int section, Qt::Orientation orientati
         return QStringLiteral("Pass coverage");
     case StatusColumn:
         return QStringLiteral("Status");
+    case JobStatusColumn:
+        return QStringLiteral("Field job status");
     default:
         return {};
     }

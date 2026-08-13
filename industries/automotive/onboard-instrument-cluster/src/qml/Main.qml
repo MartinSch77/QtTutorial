@@ -6,10 +6,17 @@ import QtTutorial.Automotive.Onboard
 // Kiosk-style digital instrument cluster. In a real embedded deployment this
 // window would be shown with visibility: Window.FullScreen and no window
 // decorations; it is left windowed here so the demo runs on a regular desktop.
+//
+// Visual language ("Design reference" in README.md): a large glanceable speed
+// gauge flanked by secondary readouts, an ambient accent colour that shifts with
+// the active driving mode, and a dedicated efficiency readout are inspired by the
+// genre of modern digital instrument clusters/hyperscreens (e.g. Mercedes-Benz
+// MBUX, Tesla's Model 3 cluster) as a *style* reference only - no trademarked
+// logos, wordmarks, or exact layouts are reproduced.
 Window {
     id: window
-    width: 1280
-    height: 480
+    width: 1400
+    height: 620
     visible: true
     color: "#12151b"
     title: qsTr("QtTutorial - Instrument Cluster")
@@ -18,71 +25,113 @@ Window {
         id: telemetry
     }
 
-    Row {
-        anchors.centerIn: parent
-        spacing: 60
+    Column {
+        anchors.fill: parent
+        anchors.margins: 16
+        spacing: 10
 
-        Gauge {
-            width: 300
-            height: 300
-            value: telemetry.speedKph
-            minValue: 0
-            maxValue: 220
-            label: qsTr("km/h")
-            accentColor: "#39c0ff"
-        }
+        Row {
+            width: parent.width
+            height: 34
+            spacing: 16
 
-        Column {
-            spacing: 18
-            width: 220
-
-            Rectangle {
-                width: parent.width
-                height: 90
-                radius: 8
-                color: "#1c212b"
-
-                Text {
-                    anchors.centerIn: parent
-                    text: telemetry.gearLabel
-                    color: "#f2f4f8"
-                    font.pixelSize: 48
-                    font.bold: true
-                }
+            Text {
+                text: qsTr("DRIVE MODE")
+                color: "#9aa4b2"
+                font.pixelSize: 12
+                font.bold: true
+                anchors.verticalCenter: parent.verticalCenter
             }
 
-            Row {
-                spacing: 12
-                anchors.horizontalCenter: parent.horizontalCenter
-
-                Text {
-                    text: "◀"
-                    font.pixelSize: 28
-                    color: "#3ddc6f"
-                    opacity: telemetry.leftTurnSignal ? 1.0 : 0.15
-                }
-                Text {
-                    text: "▶"
-                    font.pixelSize: 28
-                    color: "#3ddc6f"
-                    opacity: telemetry.rightTurnSignal ? 1.0 : 0.15
-                }
+            DrivingModeSelector {
+                anchors.verticalCenter: parent.verticalCenter
+                currentMode: telemetry.drivingMode
+                accentColor: telemetry.drivingModeAccentColor
+                onModeSelected: function(mode) { telemetry.drivingMode = mode; }
             }
 
-            AdasStrip {
-                anchors.horizontalCenter: parent.horizontalCenter
-                level: telemetry.followingDistanceLevel
+            Item { width: 20; height: 1 }
+
+            Text {
+                anchors.verticalCenter: parent.verticalCenter
+                text: qsTr("EFFICIENCY  %1%").arg(Math.round(telemetry.efficiencyPercent))
+                color: telemetry.drivingModeAccentColor
+                font.pixelSize: 14
+                font.bold: true
             }
         }
 
-        Gauge {
-            width: 300
-            height: 300
-            value: telemetry.rpm
-            minValue: 0
-            maxValue: 7000
-            label: qsTr("rpm")
-            accentColor: "#ff9f43"
+        Row {
+            width: parent.width
+            height: parent.height - 90
+            spacing: 40
+
+            FuelGauge {
+                anchors.verticalCenter: parent.verticalCenter
+                levelPercent: telemetry.fuelLevel
+                warning: telemetry.lowFuelWarning
+                accentColor: telemetry.drivingModeAccentColor
+            }
+
+            Gauge {
+                anchors.verticalCenter: parent.verticalCenter
+                width: 300
+                height: 300
+                value: telemetry.speedKph
+                minValue: 0
+                maxValue: 220
+                label: qsTr("km/h")
+                accentColor: telemetry.drivingModeAccentColor
+            }
+
+            Column {
+                anchors.verticalCenter: parent.verticalCenter
+                spacing: 18
+                width: 220
+
+                GearSelector {
+                    anchors.horizontalCenter: parent.horizontalCenter
+                    gearLabel: telemetry.gearLabel
+                    accentColor: telemetry.drivingModeAccentColor
+                }
+
+                Row {
+                    spacing: 16
+                    anchors.horizontalCenter: parent.horizontalCenter
+
+                    TurnSignalArrow {
+                        direction: -1
+                        active: telemetry.leftTurnSignal
+                    }
+                    TurnSignalArrow {
+                        direction: 1
+                        active: telemetry.rightTurnSignal
+                    }
+                }
+
+                AdasStrip {
+                    anchors.horizontalCenter: parent.horizontalCenter
+                    level: telemetry.followingDistanceLevel
+                }
+            }
+
+            Gauge {
+                anchors.verticalCenter: parent.verticalCenter
+                width: 300
+                height: 300
+                value: telemetry.rpm
+                minValue: 0
+                maxValue: 7000
+                label: qsTr("rpm")
+                accentColor: "#ff9f43"
+            }
+
+            TirePressurePanel {
+                anchors.verticalCenter: parent.verticalCenter
+                pressures: telemetry.tirePressures
+                warning: telemetry.tirePressureWarning
+                lowWheelIndex: telemetry.lowTireWheelIndex
+            }
         }
     }
 
@@ -93,7 +142,7 @@ Window {
         anchors.right: parent.right
         height: 40
         color: "#c0392b"
-        visible: telemetry.lowFuelWarning || telemetry.laneWarning
+        visible: telemetry.lowFuelWarning || telemetry.laneWarning || telemetry.tirePressureWarning
 
         Text {
             anchors.centerIn: parent
@@ -101,7 +150,9 @@ Window {
             font.bold: true
             text: telemetry.laneWarning
                   ? qsTr("WARNING: closing distance to traffic ahead")
-                  : qsTr("WARNING: low fuel level")
+                  : telemetry.tirePressureWarning
+                    ? qsTr("WARNING: low tire pressure")
+                    : qsTr("WARNING: low fuel level")
         }
     }
 }

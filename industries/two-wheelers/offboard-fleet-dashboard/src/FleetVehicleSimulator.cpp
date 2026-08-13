@@ -45,12 +45,37 @@ QString FleetVehicleSimulator::locationFor(int vehicleIndex)
     return QString::fromLatin1(kLocations[static_cast<std::size_t>(vehicleIndex) % kLocations.size()]);
 }
 
+double FleetVehicleSimulator::usageRateKphForVehicle(int vehicleIndex)
+{
+    // Deterministic per-vehicle average usage rate: busier vehicles (higher
+    // index modulo 5) rack up distance faster, so the fleet's odometers/
+    // maintenance-due flags are spread out rather than moving in lockstep.
+    constexpr double kBaseUsageKph = 9.0;
+    constexpr double kUsageStepKph = 2.5;
+    return kBaseUsageKph + static_cast<double>(vehicleIndex % 5) * kUsageStepKph;
+}
+
+double FleetVehicleSimulator::odometerKmAt(int vehicleIndex, double elapsedSeconds)
+{
+    const double elapsedHours = elapsedSeconds / 3600.0;
+    return usageRateKphForVehicle(vehicleIndex) * elapsedHours;
+}
+
+bool FleetVehicleSimulator::maintenanceDueAt(int vehicleIndex, double elapsedSeconds)
+{
+    const double odometer = odometerKmAt(vehicleIndex, elapsedSeconds);
+    const double intoInterval = std::fmod(odometer, kServiceIntervalKm);
+    return intoInterval >= (kServiceIntervalKm - kMaintenanceDueWindowKm);
+}
+
 VehicleSample FleetVehicleSimulator::sampleAt(int vehicleIndex, double elapsedSeconds)
 {
     VehicleSample sample;
     sample.id = QStringLiteral("TW-%1").arg(vehicleIndex + 1, 3, 10, QLatin1Char('0'));
     sample.location = locationFor(vehicleIndex);
     sample.batteryPercent = batteryAt(vehicleIndex, elapsedSeconds);
+    sample.odometerKm = odometerKmAt(vehicleIndex, elapsedSeconds);
+    sample.maintenanceDue = maintenanceDueAt(vehicleIndex, elapsedSeconds);
 
     if (isMaintenanceWindow(vehicleIndex, elapsedSeconds)) {
         sample.status = RiderStatus::Maintenance;

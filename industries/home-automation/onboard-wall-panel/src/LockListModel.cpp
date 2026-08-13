@@ -54,6 +54,18 @@ void LockListModel::setLocked(int row, bool locked)
     emit recentActivityChanged();
 }
 
+void LockListModel::applyScene(int sceneId)
+{
+    const Scene scene = static_cast<Scene>(sceneId);
+    const QString actor = QStringLiteral("Scene: %1").arg(SceneRegistry::definition(scene).name);
+    SceneRegistry::applyToLocks(scene, m_registry, actor, QDateTime::currentMSecsSinceEpoch());
+    if (m_registry.count() == 0) {
+        return;
+    }
+    emit dataChanged(index(0), index(m_registry.count() - 1), {LockedRole});
+    emit recentActivityChanged();
+}
+
 QStringList LockListModel::recentActivity() const
 {
     QStringList lines;

@@ -3,9 +3,11 @@
 
 #include "DriveCycleSimulator.h"
 
+#include <QColor>
 #include <QObject>
 #include <QQmlEngine>
 #include <QTimer>
+#include <QVariantList>
 
 namespace qttutorial::automotive {
 
@@ -25,6 +27,13 @@ class VehicleTelemetry : public QObject {
     Q_PROPERTY(int followingDistanceLevel READ followingDistanceLevel NOTIFY telemetryChanged)
     Q_PROPERTY(bool laneWarning READ laneWarning NOTIFY telemetryChanged)
     Q_PROPERTY(bool lowFuelWarning READ lowFuelWarning NOTIFY telemetryChanged)
+    Q_PROPERTY(int drivingMode READ drivingMode WRITE setDrivingMode NOTIFY telemetryChanged)
+    Q_PROPERTY(QString drivingModeLabel READ drivingModeLabel NOTIFY telemetryChanged)
+    Q_PROPERTY(QColor drivingModeAccentColor READ drivingModeAccentColor NOTIFY telemetryChanged)
+    Q_PROPERTY(double efficiencyPercent READ efficiencyPercent NOTIFY telemetryChanged)
+    Q_PROPERTY(QVariantList tirePressures READ tirePressures NOTIFY telemetryChanged)
+    Q_PROPERTY(bool tirePressureWarning READ tirePressureWarning NOTIFY telemetryChanged)
+    Q_PROPERTY(int lowTireWheelIndex READ lowTireWheelIndex NOTIFY telemetryChanged)
 public:
     explicit VehicleTelemetry(QObject* parent = nullptr);
 
@@ -37,6 +46,14 @@ public:
     [[nodiscard]] int followingDistanceLevel() const { return m_state.followingDistanceLevel; }
     [[nodiscard]] bool laneWarning() const { return m_state.laneWarning; }
     [[nodiscard]] bool lowFuelWarning() const { return m_state.lowFuelWarning; }
+    [[nodiscard]] int drivingMode() const { return static_cast<int>(m_state.drivingMode); }
+    void setDrivingMode(int mode);
+    [[nodiscard]] QString drivingModeLabel() const;
+    [[nodiscard]] QColor drivingModeAccentColor() const;
+    [[nodiscard]] double efficiencyPercent() const { return m_state.efficiencyPercent; }
+    [[nodiscard]] QVariantList tirePressures() const;
+    [[nodiscard]] bool tirePressureWarning() const { return m_state.tirePressureWarning; }
+    [[nodiscard]] int lowTireWheelIndex() const { return m_state.lowTireWheelIndex; }
 
 signals:
     void telemetryChanged();

@@ -21,4 +21,6 @@ qttutorial_add_app(agriculture_onboard_tractor_console
         src/qml/Gauge.qml
         src/qml/CrossTrackBar.qml
         src/qml/CoverageArc.qml
+        src/qml/FarmIcon.qml
+        src/qml/FieldCoverageMap.qml
 )

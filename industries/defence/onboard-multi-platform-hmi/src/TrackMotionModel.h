@@ -13,6 +13,7 @@ namespace qttutorial::defence {
 struct Track {
     int id = 0;
     QString classification;
+    QString domain; // "Air" | "Surface" | "Ground" - drives the track glyph shape only.
     double xKm = 0.0;
     double yKm = 0.0;
     double headingDeg = 0.0;

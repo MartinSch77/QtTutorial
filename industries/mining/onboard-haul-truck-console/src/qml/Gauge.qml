@@ -16,6 +16,14 @@ Item {
     property color accentColor: "#39c0ff"
     property bool alarm: false
 
+    // Optional "expected envelope" band (e.g. the plausible speed range for
+    // the truck's current haul-cycle phase). When bandMaxValue > bandMinValue
+    // the band is painted as a pale arc segment behind the value arc so an
+    // out-of-envelope reading is visible at a glance, not just via the alarm
+    // colour.
+    property real bandMinValue: 0
+    property real bandMaxValue: 0
+
     readonly property real startAngle: 135 * Math.PI / 180
     readonly property real sweepAngle: 270 * Math.PI / 180
     readonly property real fraction: Math.max(0, Math.min(1, (value - minValue) / (maxValue - minValue)))
@@ -23,6 +31,8 @@ Item {
 
     onValueChanged: canvas.requestPaint()
     onAlarmChanged: canvas.requestPaint()
+    onBandMinValueChanged: canvas.requestPaint()
+    onBandMaxValueChanged: canvas.requestPaint()
 
     Canvas {
         id: canvas
@@ -41,6 +51,18 @@ Item {
             ctx.arc(cx, cy, radius, root.startAngle, root.startAngle + root.sweepAngle, false);
             ctx.stroke();
 
+            if (root.bandMaxValue > root.bandMinValue) {
+                const bandStartFraction = Math.max(0, Math.min(1, (root.bandMinValue - root.minValue) / (root.maxValue - root.minValue)));
+                const bandEndFraction = Math.max(0, Math.min(1, (root.bandMaxValue - root.minValue) / (root.maxValue - root.minValue)));
+                ctx.lineWidth = radius * 0.14;
+                ctx.strokeStyle = "#3a4a3f";
+                ctx.beginPath();
+                ctx.arc(cx, cy, radius, root.startAngle + root.sweepAngle * bandStartFraction,
+                        root.startAngle + root.sweepAngle * bandEndFraction, false);
+                ctx.stroke();
+            }
+
+            ctx.lineWidth = radius * 0.14;
             ctx.strokeStyle = root.effectiveColor;
             ctx.beginPath();
             ctx.arc(cx, cy, radius, root.startAngle, root.startAngle + root.sweepAngle * root.fraction, false);

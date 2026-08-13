@@ -3,7 +3,9 @@
 
 #include "FieldMapWidget.h"
 #include "FieldOperationsModel.h"
+#include "FieldStatusOverviewWidget.h"
 #include "OperationHistoryStore.h"
+#include "TrendChartWidget.h"
 
 #include <QMainWindow>
 
@@ -11,6 +13,7 @@
 
 class QTableView;
 class QLabel;
+class QTabWidget;
 
 namespace qttutorial::agriculture::ops {
 
@@ -23,10 +26,14 @@ private:
     void onSamplesUpdated();
     void onSelectionChanged();
     void refreshMap();
+    void refreshTrend();
 
     FieldOperationsModel* m_model;
     QTableView* m_view;
+    FieldStatusOverviewWidget* m_overviewWidget;
+    QTabWidget* m_detailTabs;
     FieldMapWidget* m_mapWidget;
+    TrendChartWidget* m_fuelTrendWidget;
     QLabel* m_selectedFieldLabel;
     std::unique_ptr<OperationHistoryStore> m_historyStore;
 };

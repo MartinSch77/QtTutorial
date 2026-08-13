@@ -19,6 +19,26 @@ Window {
 
     RemoteHomeController { id: controller }
 
+    // Classifies one activity-log line by keyword so ActivityIcon.qml can
+    // show a matching glyph - simple text matching is enough here since
+    // SnapshotDiff.cpp (see offboard-remote-access-app/src/SnapshotDiff.cpp)
+    // already produces a small, predictable vocabulary of descriptions.
+    function activityIconKind(text) {
+        if (text.indexOf("lights") !== -1 || text.indexOf("brightness") !== -1) {
+            return "light";
+        }
+        if (text.indexOf("locked") !== -1 || text.indexOf("unlocked") !== -1) {
+            return "lock";
+        }
+        if (text.indexOf("Security") !== -1) {
+            return "security";
+        }
+        if (text.indexOf("Thermostat") !== -1) {
+            return "thermostat";
+        }
+        return "other";
+    }
+
     Column {
         anchors.fill: parent
 
@@ -115,8 +135,17 @@ Window {
 
                         Row {
                             width: parent.width
+                            spacing: 8
+
+                            ThermostatIcon {
+                                width: 22
+                                height: 22
+                                anchors.verticalCenter: parent.verticalCenter
+                                mode: controller.thermostatMode
+                            }
                             Text {
-                                width: parent.width - 100
+                                width: parent.width - 130
+                                anchors.verticalCenter: parent.verticalCenter
                                 text: qsTr("%1°C (target %2°C)").arg(controller.thermostatCurrent.toFixed(1)).arg(controller.thermostatTarget.toFixed(1))
                                 color: "#e6edf3"
                                 font.pixelSize: 15
@@ -189,19 +218,35 @@ Window {
                     }
                 }
 
+                Text { text: qsTr("ENERGY"); color: "#9aa4b2"; font.pixelSize: 12; font.bold: true }
+                EnergyPanel {
+                    width: parent.width - 32
+                    height: 130
+                    controller: controller
+                }
+
                 Text { text: qsTr("ACTIVITY"); color: "#9aa4b2"; font.pixelSize: 12; font.bold: true }
                 ListView {
                     width: parent.width - 32
                     height: contentHeight
                     interactive: false
-                    spacing: 4
+                    spacing: 6
                     model: controller.activityLog
-                    delegate: Text {
+                    delegate: Row {
                         width: ListView.view.width
-                        text: modelData
-                        color: "#9aa4b2"
-                        font.pixelSize: 12
-                        wrapMode: Text.WordWrap
+                        spacing: 8
+
+                        ActivityIcon {
+                            anchors.top: parent.top
+                            kind: window.activityIconKind(modelData)
+                        }
+                        Text {
+                            width: parent.width - 28
+                            text: modelData
+                            color: "#9aa4b2"
+                            font.pixelSize: 12
+                            wrapMode: Text.WordWrap
+                        }
                     }
                 }
             }

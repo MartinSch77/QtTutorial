@@ -3,6 +3,8 @@
 
 #include "TelemetrySimulator.h"
 
+#include <QSet>
+#include <QString>
 #include <QWidget>
 
 class QLabel;
@@ -11,6 +13,7 @@ namespace qttutorial::space {
 
 class RadialGauge;
 class SubsystemHealthGrid;
+class StatusIconStrip;
 
 // A fullscreen, kiosk-style embedded HMI for onboard satellite telemetry: no
 // network, no persistence, driven purely by the on-timer orbital/power/thermal
@@ -22,10 +25,14 @@ public:
 
 private:
     void onTelemetryUpdated();
+    void onSubsystemHealthChanged(const QString& subsystemName, const QString& stateName);
 
     TelemetrySimulator m_simulator;
+    QSet<QString> m_alertingSubsystems;
     QLabel* m_orbitLabel;
     QLabel* m_eclipseLabel;
+    QLabel* m_groundTrackLabel;
+    StatusIconStrip* m_iconStrip;
     RadialGauge* m_batteryGauge;
     RadialGauge* m_radiatorGauge;
     RadialGauge* m_batteryBayGauge;

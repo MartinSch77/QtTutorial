@@ -1,6 +1,8 @@
 // SPDX-License-Identifier: MIT
 import QtQuick
 
+import "Icons.js" as Icons
+
 // Simulated first-person AR HUD overlay - stands in for AR glasses / a
 // soldier heads-up display: a translucent compass strip, waypoint markers
 // and teammate position indicators, evoking an augmented-reality overlay
@@ -38,15 +40,24 @@ Rectangle {
                 ctx.strokeStyle = "#9adfff";
                 ctx.fillStyle = "#9adfff";
                 ctx.font = "11px sans-serif";
+                const cardinals = {0: "N", 90: "E", 180: "S", 270: "W"};
                 const heading = root.sim ? root.sim.hudHeadingDeg : 0;
                 for (let d = -60; d <= 60; d += 15) {
-                    const deg = ((heading + d) % 360 + 360) % 360;
+                    const deg = Math.round(((heading + d) % 360 + 360) % 360);
                     const px = width / 2 + d * (width / 130);
                     ctx.beginPath();
                     ctx.moveTo(px, height * 0.6);
                     ctx.lineTo(px, height);
                     ctx.stroke();
-                    ctx.fillText(Math.round(deg) + "°", px - 10, height * 0.45);
+                    if (deg % 90 === 0 && cardinals[deg] !== undefined) {
+                        ctx.save();
+                        ctx.fillStyle = "#ffe27a";
+                        ctx.font = "bold 13px sans-serif";
+                        ctx.fillText(cardinals[deg], px - 4, height * 0.42);
+                        ctx.restore();
+                    } else {
+                        ctx.fillText(deg + "°", px - 10, height * 0.45);
+                    }
                 }
                 ctx.strokeStyle = "#ffcc00";
                 ctx.beginPath();
@@ -121,6 +132,47 @@ Rectangle {
                     }
                 }
             }
+        }
+    }
+
+    Canvas {
+        id: statusOverlay
+        anchors.top: parent.top
+        anchors.right: parent.right
+        anchors.margins: 20
+        width: 90
+        height: 60
+
+        readonly property bool anySubsystemCritical: {
+            const list = root.sim ? root.sim.subsystems : [];
+            for (let i = 0; i < list.length; ++i) {
+                if (list[i].state === "Critical") return true;
+            }
+            return false;
+        }
+        readonly property double commsQuality: root.sim ? root.sim.commsQualityPercent : 100
+
+        onPaint: {
+            const ctx = getContext("2d");
+            ctx.reset();
+            Icons.drawAntennaBars(ctx, 16, 16, 12, commsQuality, "#9adfff");
+            ctx.fillStyle = "#9adfff";
+            ctx.font = "10px sans-serif";
+            ctx.fillText(Math.round(commsQuality) + "%", 32, 20);
+            if (anySubsystemCritical) {
+                Icons.drawWarningTriangle(ctx, 20, 44, 10, "#e0a300");
+                ctx.fillStyle = "#e0a300";
+                ctx.font = "bold 10px sans-serif";
+                ctx.fillText(qsTr("SUBSYSTEM"), 34, 42);
+                ctx.fillText(qsTr("CRITICAL"), 34, 54);
+            }
+        }
+
+        Timer {
+            interval: 200
+            running: true
+            repeat: true
+            onTriggered: statusOverlay.requestPaint()
         }
     }
 

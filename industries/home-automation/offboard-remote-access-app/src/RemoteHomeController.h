@@ -2,6 +2,7 @@
 #pragma once
 
 #include "ActivityLogStore.h"
+#include "EnergyMonitor.h"
 #include "HomeLinkClient.h"
 #include "HomeLinkServer.h"
 #include "Protocol.h"
@@ -33,6 +34,10 @@ class RemoteHomeController : public QObject {
     Q_PROPERTY(double thermostatCurrent READ thermostatCurrent NOTIFY stateChanged)
     Q_PROPERTY(double thermostatTarget READ thermostatTarget NOTIFY stateChanged)
     Q_PROPERTY(QStringList activityLog READ activityLog NOTIFY activityLogChanged)
+    Q_PROPERTY(double currentWatts READ currentWatts NOTIFY stateChanged)
+    Q_PROPERTY(double averageWatts READ averageWatts NOTIFY stateChanged)
+    Q_PROPERTY(double peakWatts READ peakWatts NOTIFY stateChanged)
+    Q_PROPERTY(QVariantList energyHistory READ energyHistory NOTIFY stateChanged)
 public:
     explicit RemoteHomeController(QObject* parent = nullptr);
 
@@ -45,6 +50,12 @@ public:
     [[nodiscard]] double thermostatCurrent() const { return m_latest.thermostatCurrent; }
     [[nodiscard]] double thermostatTarget() const { return m_latest.thermostatTarget; }
     [[nodiscard]] QStringList activityLog() const;
+    [[nodiscard]] double currentWatts() const { return m_energyHistory.samples().empty() ? 0.0 : m_energyHistory.samples().back().watts; }
+    [[nodiscard]] double averageWatts() const { return m_energyHistory.averageWatts(); }
+    [[nodiscard]] double peakWatts() const { return m_energyHistory.peakWatts(); }
+    // A list of watt values, oldest first, for a Canvas-drawn trend chart -
+    // see EnergyPanel.qml.
+    [[nodiscard]] QVariantList energyHistory() const;
 
     Q_INVOKABLE void setLightOn(const QString& room, bool on);
     Q_INVOKABLE void setBrightness(const QString& room, int brightness);
@@ -65,6 +76,7 @@ private:
     HomeLinkServer m_server;
     HomeLinkClient m_client;
     ActivityLogStore m_activityStore;
+    EnergyHistory m_energyHistory;
     Snapshot m_latest;
     bool m_connected = false;
 };

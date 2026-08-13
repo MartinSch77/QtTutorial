@@ -97,4 +97,33 @@ double RunHistoryStore::averageDelayInRange(const QDateTime& from, const QDateTi
     return query.value(0).toDouble();
 }
 
+std::vector<std::pair<QDateTime, double>> RunHistoryStore::networkDelaySeries(const QDateTime& from,
+                                                                                const QDateTime& to,
+                                                                                qint64 bucketSeconds) const
+{
+    std::vector<std::pair<QDateTime, double>> series;
+    if (bucketSeconds <= 0) {
+        return series;
+    }
+    const qint64 bucketMs = bucketSeconds * 1000;
+    QSqlQuery query(QSqlDatabase::database(m_connectionName));
+    if (!query.prepare(QStringLiteral("SELECT (timestamp / :bucket) * :bucket AS bucket_start, "
+                                       "AVG(delay_minutes) FROM run_history "
+                                       "WHERE timestamp BETWEEN :from AND :to "
+                                       "GROUP BY bucket_start ORDER BY bucket_start ASC"))) {
+        return series;
+    }
+    query.bindValue(QStringLiteral(":bucket"), bucketMs);
+    query.bindValue(QStringLiteral(":from"), from.toMSecsSinceEpoch());
+    query.bindValue(QStringLiteral(":to"), to.toMSecsSinceEpoch());
+    if (!query.exec()) {
+        return series;
+    }
+    while (query.next()) {
+        const QDateTime bucketStart = QDateTime::fromMSecsSinceEpoch(query.value(0).toLongLong());
+        series.emplace_back(bucketStart, query.value(1).toDouble());
+    }
+    return series;
+}
+
 } // namespace qttutorial::fleet_ops

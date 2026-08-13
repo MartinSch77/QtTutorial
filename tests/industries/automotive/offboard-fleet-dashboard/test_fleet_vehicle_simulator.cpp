@@ -45,6 +45,55 @@ private slots:
         const VehicleSample sample = FleetVehicleSimulator::sampleAt(0, lowFuelTime);
         QVERIFY(sample.faultCodes.contains(QStringLiteral("F-FUEL-LOW")));
     }
+
+    void efficiencyPeaksAtIdealCruiseSpeed()
+    {
+        QCOMPARE(FleetVehicleSimulator::efficiencyAt(FleetVehicleSimulator::kIdealCruiseKph), 100.0);
+        QVERIFY(FleetVehicleSimulator::efficiencyAt(FleetVehicleSimulator::kIdealCruiseKph + 20.0) < 100.0);
+        QVERIFY(FleetVehicleSimulator::efficiencyAt(FleetVehicleSimulator::kIdealCruiseKph - 20.0) < 100.0);
+    }
+
+    void efficiencyIsDerivedFromSampleSpeed()
+    {
+        const VehicleSample sample = FleetVehicleSimulator::sampleAt(0, 0.0);
+        QCOMPARE(sample.efficiencyPercent, FleetVehicleSimulator::efficiencyAt(sample.speedKph));
+    }
+
+    void odometerIncreasesMonotonicallyOverTime()
+    {
+        const double early = FleetVehicleSimulator::odometerKmAt(0, 100.0);
+        const double later = FleetVehicleSimulator::odometerKmAt(0, 10000.0);
+        QVERIFY(later > early);
+    }
+
+    void odometerMatchesSampleAndStaysNonNegative()
+    {
+        for (double t = 0.0; t < 5000.0; t += 250.0) {
+            const VehicleSample sample = FleetVehicleSimulator::sampleAt(2, t);
+            QCOMPARE(sample.odometerKm, FleetVehicleSimulator::odometerKmAt(2, t));
+            QVERIFY(sample.odometerKm >= 0.0);
+        }
+    }
+
+    void maintenanceBecomesDueAsIntervalIsApproachedAndWrapsAround()
+    {
+        QVERIFY(!FleetVehicleSimulator::isMaintenanceDue(0.0));
+        QVERIFY(FleetVehicleSimulator::isMaintenanceDue(FleetVehicleSimulator::kMaintenanceIntervalKm - 1.0));
+        // After wrapping past the interval, a fresh service window starts again.
+        QVERIFY(!FleetVehicleSimulator::isMaintenanceDue(FleetVehicleSimulator::kMaintenanceIntervalKm + 1.0));
+    }
+
+    void maintenanceDueEventuallyTriggersForARunningFleetVehicle()
+    {
+        bool dueSeen = false;
+        for (double t = 0.0; t < 200000.0; t += 500.0) {
+            if (FleetVehicleSimulator::sampleAt(1, t).maintenanceDue) {
+                dueSeen = true;
+                break;
+            }
+        }
+        QVERIFY(dueSeen);
+    }
 };
 
 QTEST_MAIN(TestFleetVehicleSimulator)

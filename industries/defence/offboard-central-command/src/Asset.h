@@ -22,6 +22,15 @@ struct Asset {
     double headingDeg = 0.0;
     QString health = QStringLiteral("Nominal");
     QDateTime lastUpdated;
+
+    // Comms-link data-quality fields: how good the simulated link to this
+    // asset currently is, and whether that has left the displayed position
+    // above stale (frozen at the last-delivered update) rather than fresh.
+    // Purely informational - this never reflects anything about engaging
+    // the asset, only how trustworthy/current its plotted position is.
+    double commsQualityPercent = 100.0;
+    bool trackStale = false;
+    double dataAgeSeconds = 0.0;
 };
 
 } // namespace qttutorial::defence

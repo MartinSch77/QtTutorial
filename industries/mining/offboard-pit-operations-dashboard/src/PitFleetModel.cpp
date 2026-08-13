@@ -1,6 +1,8 @@
 // SPDX-License-Identifier: MIT
 #include "PitFleetModel.h"
 
+#include "PitIcons.h"
+
 namespace qttutorial::mining::pit {
 
 PitFleetModel::PitFleetModel(int truckCount, QObject* parent)
@@ -39,10 +41,22 @@ int PitFleetModel::columnCount(const QModelIndex& parent) const
 
 QVariant PitFleetModel::data(const QModelIndex& index, int role) const
 {
-    if (!index.isValid() || index.row() >= m_truckCount || role != Qt::DisplayRole) {
+    if (!index.isValid() || index.row() >= m_truckCount) {
         return {};
     }
     const TruckSample& sample = m_samples[static_cast<std::size_t>(index.row())];
+
+    if (role == Qt::ToolTipRole && sample.overloaded) {
+        return QStringLiteral("Payload exceeds rated capacity of %1 t")
+            .arg(HaulFleetSimulator::kRatedCapacityTonnes);
+    }
+    if (role == Qt::DecorationRole && index.column() == IdColumn && sample.overloaded) {
+        return icons::warningTriangleIcon(QColor("#e5484d"), 16);
+    }
+
+    if (role != Qt::DisplayRole) {
+        return {};
+    }
     switch (index.column()) {
     case IdColumn:
         return sample.id;
@@ -50,6 +64,10 @@ QVariant PitFleetModel::data(const QModelIndex& index, int role) const
         return sample.stateLabel;
     case PayloadColumn:
         return QStringLiteral("%1 t").arg(sample.payloadTonnes, 0, 'f', 1);
+    case SpeedColumn:
+        return QStringLiteral("%1 km/h").arg(sample.speedKph, 0, 'f', 0);
+    case FuelColumn:
+        return QStringLiteral("%1 L/h").arg(sample.fuelLtrPerHour, 0, 'f', 0);
     case LocationColumn:
         return sample.location;
     default:
@@ -69,6 +87,10 @@ QVariant PitFleetModel::headerData(int section, Qt::Orientation orientation, int
         return QStringLiteral("Haul state");
     case PayloadColumn:
         return QStringLiteral("Payload");
+    case SpeedColumn:
+        return QStringLiteral("Speed");
+    case FuelColumn:
+        return QStringLiteral("Fuel");
     case LocationColumn:
         return QStringLiteral("Location");
     default:

@@ -16,7 +16,14 @@ qttutorial::cab_display::RouteProfile buildDemoRoute()
     std::vector<SpeedSegment> segments{
         {0.0, 1800.0, 140.0},
         {1800.0, 2200.0, 80.0},
-        {2200.0, 6000.0, 140.0},
+        // A steep downhill grade on the approach to the 60 km/h restriction
+        // ahead: the flat-track braking curve still sets the permitted-speed
+        // target from here, but the train's real braking authority is
+        // reduced on this grade, so the brake-warning indication can
+        // genuinely (briefly) latch on — the same divergence between
+        // advisory curve and physical reality a real ETCS-fitted line's
+        // brake-intervention supervision exists to catch.
+        {2200.0, 6000.0, 140.0, -6.0},
         {6000.0, 6400.0, 60.0},
         {6400.0, 9000.0, 140.0},
     };

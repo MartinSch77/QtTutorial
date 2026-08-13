@@ -2,6 +2,7 @@
 #pragma once
 
 #include "RoomRegistry.h"
+#include "SceneRegistry.h"
 
 #include <QAbstractListModel>
 #include <QQmlEngine>
@@ -32,6 +33,9 @@ public:
     Q_INVOKABLE void setLightOn(int row, bool on);
     Q_INVOKABLE void setBrightness(int row, int brightness);
     Q_INVOKABLE void setBlindPosition(int row, int position);
+    // Applies a scene (see Scene/SceneRegistry) to every room at once - the
+    // cross-room effect itself lives in SceneRegistry, this just re-renders.
+    Q_INVOKABLE void applyScene(int sceneId);
 
 private:
     RoomRegistry m_registry;

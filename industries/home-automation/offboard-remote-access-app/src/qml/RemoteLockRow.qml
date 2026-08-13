@@ -20,9 +20,16 @@ Rectangle {
     Row {
         anchors.fill: parent
         anchors.margins: 12
+        spacing: 8
 
+        LockIcon {
+            width: 20
+            height: 20
+            anchors.verticalCenter: parent.verticalCenter
+            locked: root.locked
+        }
         Text {
-            width: parent.width - 60
+            width: parent.width - 88
             anchors.verticalCenter: parent.verticalCenter
             text: root.lockName
             color: "#e6edf3"

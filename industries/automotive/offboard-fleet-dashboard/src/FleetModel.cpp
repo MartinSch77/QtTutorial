@@ -39,10 +39,17 @@ int FleetModel::columnCount(const QModelIndex& parent) const
 
 QVariant FleetModel::data(const QModelIndex& index, int role) const
 {
-    if (!index.isValid() || index.row() >= m_vehicleCount || role != Qt::DisplayRole) {
+    if (!index.isValid() || index.row() >= m_vehicleCount) {
         return {};
     }
     const VehicleSample& sample = m_samples[static_cast<std::size_t>(index.row())];
+
+    if (role == MaintenanceDueRole) {
+        return sample.maintenanceDue;
+    }
+    if (role != Qt::DisplayRole) {
+        return {};
+    }
     switch (index.column()) {
     case IdColumn:
         return sample.id;
@@ -52,6 +59,10 @@ QVariant FleetModel::data(const QModelIndex& index, int role) const
         return QStringLiteral("%1 km/h").arg(sample.speedKph, 0, 'f', 1);
     case FuelColumn:
         return QStringLiteral("%1 %").arg(sample.fuelPercent, 0, 'f', 1);
+    case EfficiencyColumn:
+        return QStringLiteral("%1 %").arg(sample.efficiencyPercent, 0, 'f', 0);
+    case MaintenanceColumn:
+        return sample.maintenanceDue ? QStringLiteral("Due soon") : QStringLiteral("OK");
     case FaultCodesColumn:
         return sample.faultCodes.isEmpty() ? QStringLiteral("-") : sample.faultCodes.join(QStringLiteral(", "));
     default:
@@ -73,6 +84,10 @@ QVariant FleetModel::headerData(int section, Qt::Orientation orientation, int ro
         return QStringLiteral("Speed");
     case FuelColumn:
         return QStringLiteral("Fuel");
+    case EfficiencyColumn:
+        return QStringLiteral("Efficiency");
+    case MaintenanceColumn:
+        return QStringLiteral("Maintenance");
     case FaultCodesColumn:
         return QStringLiteral("Fault codes");
     default:

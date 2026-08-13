@@ -21,3 +21,9 @@ qttutorial_add_test(test_detection_simulator
     LIB defence_onboard_lib
     QT_LIBS Qt6::Core
 )
+
+qttutorial_add_test(test_data_link_track_model
+    SOURCES test_data_link_track_model.cpp
+    LIB defence_onboard_lib
+    QT_LIBS Qt6::Core
+)

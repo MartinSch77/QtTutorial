@@ -9,6 +9,8 @@ add_library(plant_scada_lib STATIC
     src/Historian.cpp
     src/TagTableModel.h
     src/TagTableModel.cpp
+    src/PlantOverviewModel.h
+    src/PlantOverviewModel.cpp
 )
 target_include_directories(plant_scada_lib PUBLIC src)
 target_link_libraries(plant_scada_lib PUBLIC Qt6::Core Qt6::Sql)
@@ -22,5 +24,7 @@ qttutorial_add_app(offboard_plant_scada
         src/MainWindow.cpp
         src/TrendWidget.h
         src/TrendWidget.cpp
+        src/PlantOverviewWidget.h
+        src/PlantOverviewWidget.cpp
     QT_LIBS Qt6::Widgets plant_scada_lib
 )

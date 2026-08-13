@@ -2,7 +2,9 @@
 #include "MainWindow.h"
 
 #include "BatteryTrendWidget.h"
+#include "PassScheduleWidget.h"
 #include "SatelliteTableModel.h"
+#include "WorldMapWidget.h"
 
 #include <QDateTime>
 #include <QDir>
@@ -12,6 +14,8 @@
 #include <QStandardPaths>
 #include <QTableView>
 
+#include <utility>
+
 namespace qttutorial::space {
 
 MainWindow::MainWindow(QWidget* parent)
@@ -19,6 +23,8 @@ MainWindow::MainWindow(QWidget* parent)
     , m_fleetModel(new SatelliteTableModel(this))
     , m_fleetView(new QTableView(this))
     , m_trendWidget(new BatteryTrendWidget(this))
+    , m_worldMap(new WorldMapWidget(m_stationTracker.stations(), this))
+    , m_passSchedule(new PassScheduleWidget(this))
     , m_selectedLabel(new QLabel(this))
     , m_timer(new QTimer(this))
 {
@@ -43,8 +49,13 @@ MainWindow::MainWindow(QWidget* parent)
     layout->addWidget(m_fleetView, 1, 0);
     layout->addWidget(m_selectedLabel, 0, 1);
     layout->addWidget(m_trendWidget, 1, 1);
+    layout->addWidget(new QLabel(tr("Fleet Ground Track"), this), 2, 0);
+    layout->addWidget(m_worldMap, 3, 0);
+    layout->addWidget(m_passSchedule, 3, 1);
     layout->setColumnStretch(0, 3);
     layout->setColumnStretch(1, 2);
+    layout->setRowStretch(1, 2);
+    layout->setRowStretch(3, 3);
 
     connect(m_fleetView->selectionModel(), &QItemSelectionModel::selectionChanged, this,
             &MainWindow::onSelectionChanged);
@@ -52,7 +63,7 @@ MainWindow::MainWindow(QWidget* parent)
     m_timer->start(500);
     onTick();
 
-    resize(900, 520);
+    resize(1180, 820);
 }
 
 void MainWindow::onTick()
@@ -72,6 +83,17 @@ void MainWindow::onTick()
     }
 
     m_fleetModel->setSatellites(m_simulator.satellites());
+    m_worldMap->setFleet(m_simulator.satellites());
+
+    std::vector<ContactWindow> windows;
+    windows.reserve(m_simulator.satellites().size());
+    for (const SatelliteState& satellite : m_simulator.satellites()) {
+        if (auto window = m_stationTracker.nextContact(satellite, satellite.orbitalPeriodMinutes)) {
+            windows.push_back(*window);
+        }
+    }
+    m_passSchedule->setContactWindows(std::move(windows));
+
     onSelectionChanged();
 }
 

@@ -109,6 +109,86 @@ private slots:
         const double hotPressure = RideCycleSimulator::tyrePressureForTemp(60.0, false);
         QVERIFY(hotPressure > coolPressure);
     }
+
+    void raceModeAcceleratesFasterThanRainMode()
+    {
+        RideCycleSimulator rainSim;
+        rainSim.setRidingMode(RidingMode::Rain);
+        RideCycleSimulator raceSim;
+        raceSim.setRidingMode(RidingMode::Race);
+
+        // Same elapsed time, same target-speed profile (both simulators start at
+        // t=0 in the acceleration phase): Race mode's steeper power-delivery
+        // curve (smaller time constant) should have the bike further along
+        // toward the target speed than Rain mode after the same short interval.
+        double rainSpeed = 0.0;
+        double raceSpeed = 0.0;
+        for (int i = 0; i < 20; ++i) {
+            rainSpeed = rainSim.advance(0.05).speedKph;
+            raceSpeed = raceSim.advance(0.05).speedKph;
+        }
+        QVERIFY(raceSpeed > rainSpeed);
+    }
+
+    void speedTimeConstantIsSnappierInHigherModes()
+    {
+        QVERIFY(RideCycleSimulator::speedTimeConstantSecondsForMode(RidingMode::Rain)
+                > RideCycleSimulator::speedTimeConstantSecondsForMode(RidingMode::Road));
+        QVERIFY(RideCycleSimulator::speedTimeConstantSecondsForMode(RidingMode::Road)
+                > RideCycleSimulator::speedTimeConstantSecondsForMode(RidingMode::Sport));
+        QVERIFY(RideCycleSimulator::speedTimeConstantSecondsForMode(RidingMode::Sport)
+                > RideCycleSimulator::speedTimeConstantSecondsForMode(RidingMode::Race));
+    }
+
+    void rainModeLimitsLeanAngleComparedToRace()
+    {
+        QVERIFY(RideCycleSimulator::leanAngleFactorForMode(RidingMode::Rain)
+                < RideCycleSimulator::leanAngleFactorForMode(RidingMode::Race));
+
+        RideCycleSimulator rainSim;
+        rainSim.setRidingMode(RidingMode::Rain);
+        RideCycleSimulator raceSim;
+        raceSim.setRidingMode(RidingMode::Race);
+        for (int i = 0; i < 700; ++i) {
+            rainSim.advance(0.05);
+            raceSim.advance(0.05);
+        }
+        QVERIFY(std::abs(raceSim.state().leanAngleDeg) >= std::abs(rainSim.state().leanAngleDeg));
+    }
+
+    void fuelBurnRateIncreasesWithRpmAndMode()
+    {
+        const double lowRpmBurn = RideCycleSimulator::fuelBurnRateLitresPerHour(2000.0, RidingMode::Road);
+        const double highRpmBurn = RideCycleSimulator::fuelBurnRateLitresPerHour(9000.0, RidingMode::Road);
+        QVERIFY(highRpmBurn > lowRpmBurn);
+
+        const double roadBurn = RideCycleSimulator::fuelBurnRateLitresPerHour(6000.0, RidingMode::Road);
+        const double raceBurn = RideCycleSimulator::fuelBurnRateLitresPerHour(6000.0, RidingMode::Race);
+        QVERIFY(raceBurn > roadBurn);
+    }
+
+    void fuelLevelDecreasesOverTimeAndStaysNonNegative()
+    {
+        RideCycleSimulator sim;
+        sim.setRidingMode(RidingMode::Race);
+        const double startFuel = sim.state().fuelLitres;
+        double lastFuel = startFuel;
+        for (int i = 0; i < 200; ++i) {
+            const RideState state = sim.advance(0.05);
+            QVERIFY(state.fuelLitres <= lastFuel + 1e-9);
+            QVERIFY(state.fuelLitres >= 0.0);
+            lastFuel = state.fuelLitres;
+        }
+        QVERIFY(lastFuel < startFuel);
+    }
+
+    void ridingModeLabelsAreCapitalised()
+    {
+        QCOMPARE(QString::fromLatin1(ridingModeLabel(RidingMode::Rain)), QStringLiteral("Rain"));
+        QCOMPARE(QString::fromLatin1(ridingModeLabel(RidingMode::Road)), QStringLiteral("Road"));
+        QCOMPARE(QString::fromLatin1(ridingModeLabel(RidingMode::Sport)), QStringLiteral("Sport"));
+        QCOMPARE(QString::fromLatin1(ridingModeLabel(RidingMode::Race)), QStringLiteral("Race"));
+    }
 };
 
 QTEST_MAIN(TestRideCycleSimulator)

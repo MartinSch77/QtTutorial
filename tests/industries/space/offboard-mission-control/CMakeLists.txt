@@ -15,3 +15,15 @@ qttutorial_add_test(test_telemetry_history_store
     LIB mission_control_lib
     QT_LIBS Qt6::Core Qt6::Sql
 )
+
+qttutorial_add_test(test_ground_track_math
+    SOURCES test_ground_track_math.cpp
+    LIB mission_control_lib
+    QT_LIBS Qt6::Core
+)
+
+qttutorial_add_test(test_ground_station_tracker
+    SOURCES test_ground_station_tracker.cpp
+    LIB mission_control_lib
+    QT_LIBS Qt6::Core
+)

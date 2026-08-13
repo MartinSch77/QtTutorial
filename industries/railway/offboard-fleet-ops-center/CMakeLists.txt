@@ -5,6 +5,8 @@ add_library(fleet_ops_lib STATIC
     src/DelayCalculator.cpp
     src/FleetSimulator.h
     src/FleetSimulator.cpp
+    src/FleetMapGeometry.h
+    src/FleetMapGeometry.cpp
     src/RunHistoryStore.h
     src/RunHistoryStore.cpp
     src/FleetTableModel.h
@@ -22,5 +24,7 @@ qttutorial_add_app(offboard_fleet_ops_center
         src/MainWindow.cpp
         src/DelayTrendWidget.h
         src/DelayTrendWidget.cpp
+        src/FleetMapWidget.h
+        src/FleetMapWidget.cpp
     QT_LIBS Qt6::Widgets fleet_ops_lib
 )

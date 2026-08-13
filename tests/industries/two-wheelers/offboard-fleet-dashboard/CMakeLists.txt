@@ -9,3 +9,9 @@ qttutorial_add_test(test_two_wheelers_telemetry_history_store
     LIB two_wheelers_offboard_fleet_dashboard_lib
     QT_LIBS Qt6::Core Qt6::Sql
 )
+
+qttutorial_add_test(test_two_wheelers_fleet_analytics
+    SOURCES test_fleet_analytics.cpp
+    LIB two_wheelers_offboard_fleet_dashboard_lib
+    QT_LIBS Qt6::Core
+)

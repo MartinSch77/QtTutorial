@@ -27,7 +27,18 @@ QVariant AssetTableModel::data(const QModelIndex& index, int role) const
     }
     const Asset& asset = m_assets[static_cast<std::size_t>(index.row())];
 
-    if (role == Qt::BackgroundRole && index.column() == HealthColumn) {
+    if (role == Qt::BackgroundRole) {
+        return backgroundFor(asset, index.column());
+    }
+    if (role == Qt::DisplayRole) {
+        return displayValueFor(asset, index.column());
+    }
+    return {};
+}
+
+QVariant AssetTableModel::backgroundFor(const Asset& asset, int column)
+{
+    if (column == HealthColumn) {
         if (asset.health == QStringLiteral("Critical")) {
             return QColor(0xa0, 0x20, 0x20);
         }
@@ -36,17 +47,25 @@ QVariant AssetTableModel::data(const QModelIndex& index, int role) const
         }
         return QColor(0x2a, 0x8a, 0x2a);
     }
-
-    if (role != Qt::DisplayRole) {
-        return {};
+    if (column == LinkColumn && asset.trackStale) {
+        return QColor(0x5a, 0x46, 0x14);
     }
-    switch (index.column()) {
+    return {};
+}
+
+QVariant AssetTableModel::displayValueFor(const Asset& asset, int column)
+{
+    switch (column) {
     case IdColumn:
         return asset.id;
     case TypeColumn:
         return toString(asset.type);
     case HealthColumn:
         return asset.health;
+    case LinkColumn:
+        return asset.trackStale
+                ? QStringLiteral("STALE (%1s)").arg(QString::number(asset.dataAgeSeconds, 'f', 0))
+                : QStringLiteral("Current (%1%)").arg(QString::number(asset.commsQualityPercent, 'f', 0));
     case PositionColumn:
         return QStringLiteral("%1, %2 km").arg(QString::number(asset.xKm, 'f', 1),
                                                 QString::number(asset.yKm, 'f', 1));
@@ -67,6 +86,8 @@ QVariant AssetTableModel::headerData(int section, Qt::Orientation orientation, i
         return QStringLiteral("Type");
     case HealthColumn:
         return QStringLiteral("Health");
+    case LinkColumn:
+        return QStringLiteral("Data Link");
     case PositionColumn:
         return QStringLiteral("Last-Known Position");
     default:

@@ -20,5 +20,7 @@ qttutorial_add_app(offboard_fleet_dashboard
         src/MainWindow.cpp
         src/TrendWidget.h
         src/TrendWidget.cpp
+        src/FleetMaintenanceDelegate.h
+        src/FleetMaintenanceDelegate.cpp
     QT_LIBS Qt6::Widgets Qt6::Sql offboard_fleet_dashboard_lib
 )

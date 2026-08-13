@@ -57,6 +57,11 @@ void SecurityListModel::setArmed(bool armed)
     emit breachChanged();
 }
 
+void SecurityListModel::applyScene(int sceneId)
+{
+    setArmed(SceneRegistry::definition(static_cast<Scene>(sceneId)).armSecurity);
+}
+
 void SecurityListModel::simulateSensorBlip()
 {
     if (m_activeSensor != -1) {

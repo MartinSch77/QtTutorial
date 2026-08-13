@@ -49,6 +49,38 @@ QStringList FleetVehicleSimulator::faultCodesFor(int vehicleIndex, double elapse
     return codes;
 }
 
+double FleetVehicleSimulator::efficiencyAt(double speedKph)
+{
+    // Efficiency is highest at the fleet's ideal cruising speed and falls off the
+    // further a vehicle strays from it in either direction (too slow wastes time
+    // and fuel idling in traffic, too fast burns disproportionately more fuel) -
+    // the same "derived from the existing speed signal" correlation the fuel model
+    // already relies on, rather than an independent random number.
+    const double deviation = std::abs(speedKph - kIdealCruiseKph);
+    return std::clamp(100.0 - deviation * 1.1, 0.0, 100.0);
+}
+
+double FleetVehicleSimulator::odometerKmAt(int vehicleIndex, double elapsedSeconds)
+{
+    // Closed-form integral of speedAt()'s speed profile (which never dips below
+    // zero, so the std::max(0, ...) clamp in speedAt() never actually engages),
+    // so the odometer is the exact distance travelled under that same speed
+    // signal rather than an independent approximation.
+    const double phaseOffset = static_cast<double>(vehicleIndex) * 7.0;
+    constexpr double kPeriodSeconds = 90.0;
+    const double omega = kTwoPi / kPeriodSeconds;
+    const double distanceKmPerHourTerm = kIdealCruiseKph * elapsedSeconds;
+    const double oscillatingTerm = (30.0 / omega)
+        * (std::cos(omega * phaseOffset) - std::cos(omega * (elapsedSeconds + phaseOffset)));
+    return (distanceKmPerHourTerm + oscillatingTerm) / 3600.0;
+}
+
+bool FleetVehicleSimulator::isMaintenanceDue(double odometerKm)
+{
+    const double sinceLastService = std::fmod(odometerKm, kMaintenanceIntervalKm);
+    return sinceLastService > (kMaintenanceIntervalKm - kMaintenanceWindowKm);
+}
+
 VehicleSample FleetVehicleSimulator::sampleAt(int vehicleIndex, double elapsedSeconds)
 {
     VehicleSample sample;
@@ -57,6 +89,9 @@ VehicleSample FleetVehicleSimulator::sampleAt(int vehicleIndex, double elapsedSe
     sample.speedKph = speedAt(vehicleIndex, elapsedSeconds);
     sample.fuelPercent = fuelAt(vehicleIndex, elapsedSeconds);
     sample.faultCodes = faultCodesFor(vehicleIndex, elapsedSeconds, sample.fuelPercent);
+    sample.efficiencyPercent = efficiencyAt(sample.speedKph);
+    sample.odometerKm = odometerKmAt(vehicleIndex, elapsedSeconds);
+    sample.maintenanceDue = isMaintenanceDue(sample.odometerKm);
     return sample;
 }
 

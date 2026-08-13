@@ -67,4 +67,13 @@ void RoomListModel::setBlindPosition(int row, int position)
     emit dataChanged(idx, idx, {BlindPositionRole});
 }
 
+void RoomListModel::applyScene(int sceneId)
+{
+    SceneRegistry::applyToRooms(static_cast<Scene>(sceneId), m_registry);
+    if (m_registry.count() == 0) {
+        return;
+    }
+    emit dataChanged(index(0), index(m_registry.count() - 1), {LightOnRole, BrightnessRole});
+}
+
 } // namespace qttutorial::homeautomation

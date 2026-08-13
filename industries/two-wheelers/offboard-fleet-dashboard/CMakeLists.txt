@@ -5,6 +5,8 @@ add_library(two_wheelers_offboard_fleet_dashboard_lib STATIC
     src/FleetVehicleSimulator.cpp
     src/FleetModel.h
     src/FleetModel.cpp
+    src/FleetAnalytics.h
+    src/FleetAnalytics.cpp
     src/TelemetryHistoryStore.h
     src/TelemetryHistoryStore.cpp
 )
@@ -20,5 +22,9 @@ qttutorial_add_app(two_wheelers_offboard_fleet_dashboard
         src/MainWindow.cpp
         src/TrendWidget.h
         src/TrendWidget.cpp
+        src/FleetIcons.h
+        src/FleetIcons.cpp
+        src/FleetIconDelegate.h
+        src/FleetIconDelegate.cpp
     QT_LIBS Qt6::Widgets Qt6::Sql two_wheelers_offboard_fleet_dashboard_lib
 )

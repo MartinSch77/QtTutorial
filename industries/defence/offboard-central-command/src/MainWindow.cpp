@@ -2,14 +2,18 @@
 #include "MainWindow.h"
 
 #include "AssetTableModel.h"
+#include "FleetReadiness.h"
+#include "FleetReadinessBoard.h"
 #include "TacticalMapWidget.h"
 
 #include <QDateTime>
 #include <QDir>
 #include <QGridLayout>
+#include <QHBoxLayout>
 #include <QHeaderView>
 #include <QLabel>
 #include <QStandardPaths>
+#include <QVBoxLayout>
 
 namespace qttutorial::defence {
 
@@ -33,6 +37,8 @@ MainWindow::MainWindow(QWidget* parent)
     , m_assetModel(new AssetTableModel(this))
     , m_assetView(new QTableView(this))
     , m_mapWidget(new TacticalMapWidget(this))
+    , m_readinessBoard(new FleetReadinessBoard(this))
+    , m_severityFilter(new QComboBox(this))
     , m_alertList(new QListWidget(this))
     , m_timer(new QTimer(this))
 {
@@ -50,13 +56,28 @@ MainWindow::MainWindow(QWidget* parent)
     m_assetView->setSelectionBehavior(QAbstractItemView::SelectRows);
     m_assetView->setSelectionMode(QAbstractItemView::SingleSelection);
 
+    m_severityFilter->addItem(tr("All severities"), QVariant::fromValue(static_cast<int>(AlertSeverity::Info)));
+    m_severityFilter->addItem(tr("Caution and above"), QVariant::fromValue(static_cast<int>(AlertSeverity::Caution)));
+    m_severityFilter->addItem(tr("Critical only"), QVariant::fromValue(static_cast<int>(AlertSeverity::Critical)));
+    connect(m_severityFilter, &QComboBox::currentIndexChanged, this, &MainWindow::refreshAlertList);
+
+    auto* alertHeaderRow = new QWidget(this);
+    auto* alertHeaderLayout = new QHBoxLayout(alertHeaderRow);
+    alertHeaderLayout->setContentsMargins(0, 0, 0, 0);
+    alertHeaderLayout->addWidget(new QLabel(tr("Event / Alert Log"), alertHeaderRow));
+    alertHeaderLayout->addStretch();
+    alertHeaderLayout->addWidget(new QLabel(tr("Filter:"), alertHeaderRow));
+    alertHeaderLayout->addWidget(m_severityFilter);
+
     auto* layout = new QGridLayout(this);
     layout->addWidget(new QLabel(tr("Tactical Map"), this), 0, 0);
     layout->addWidget(m_mapWidget, 1, 0, 2, 1);
+    layout->addWidget(new QLabel(tr("Fleet Readiness"), this), 3, 0);
+    layout->addWidget(m_readinessBoard, 4, 0);
     layout->addWidget(new QLabel(tr("Assets"), this), 0, 1);
     layout->addWidget(m_assetView, 1, 1);
-    layout->addWidget(new QLabel(tr("Event / Alert Log"), this), 2, 1);
-    layout->addWidget(m_alertList, 3, 1);
+    layout->addWidget(alertHeaderRow, 2, 1);
+    layout->addWidget(m_alertList, 3, 1, 2, 1);
     layout->setColumnStretch(0, 3);
     layout->setColumnStretch(1, 3);
     layout->setRowStretch(1, 2);
@@ -67,7 +88,7 @@ MainWindow::MainWindow(QWidget* parent)
     m_timer->start(500);
     onTick();
 
-    resize(1000, 620);
+    resize(1000, 700);
 }
 
 void MainWindow::onTick()
@@ -89,6 +110,7 @@ void MainWindow::onTick()
 
     m_assetModel->setAssets(m_simulator.assets());
     m_mapWidget->setAssets(m_simulator.assets());
+    m_readinessBoard->setSummary(summarizeReadiness(m_simulator.assets()));
 }
 
 void MainWindow::onAlertRaised(const Alert& alert)
@@ -97,10 +119,15 @@ void MainWindow::onAlertRaised(const Alert& alert)
     refreshAlertList();
 }
 
+AlertSeverity MainWindow::selectedMinimumSeverity() const
+{
+    return static_cast<AlertSeverity>(m_severityFilter->currentData().toInt());
+}
+
 void MainWindow::refreshAlertList()
 {
     m_alertList->clear();
-    for (const Alert& alert : m_alertLog.alertsBySeverity()) {
+    for (const Alert& alert : m_alertLog.alertsBySeverity(selectedMinimumSeverity())) {
         auto* item = new QListWidgetItem(
             QStringLiteral("[%1] %2 - %3").arg(alert.timestamp.toString(Qt::ISODate), alert.assetId, alert.message));
         item->setForeground(colorForSeverity(alert.severity));

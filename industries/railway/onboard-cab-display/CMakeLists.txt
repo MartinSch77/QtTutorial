@@ -17,5 +17,13 @@ qttutorial_add_app(onboard_cab_display
     SOURCES src/main.cpp
     QT_LIBS Qt6::Gui Qt6::Qml Qt6::Quick onboard_cab_display_lib
     QML_MODULE_URI Railway.OnboardCabDisplay
-    QML_SOURCES qml/Main.qml
+    QML_SOURCES
+        qml/Main.qml
+        qml/SpeedDial.qml
+        qml/PlanningStrip.qml
+        qml/TrainIcon.qml
+        qml/SignalLampIcon.qml
+        qml/RailIcon.qml
+        qml/BrakeIcon.qml
+        qml/DoorsIcon.qml
 )

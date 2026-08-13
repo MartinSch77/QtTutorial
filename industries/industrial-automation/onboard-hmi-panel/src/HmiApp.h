@@ -24,6 +24,7 @@ public:
 
 public slots:
     void togglePump();
+    void toggleValve();
 
 private:
     ProcessSimulator m_process;

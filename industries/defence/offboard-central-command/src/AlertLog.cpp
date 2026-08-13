@@ -22,4 +22,15 @@ std::vector<Alert> AlertLog::alertsBySeverity() const
     return sorted;
 }
 
+std::vector<Alert> AlertLog::alertsBySeverity(AlertSeverity minimumSeverity) const
+{
+    std::vector<Alert> filtered;
+    for (Alert& alert : alertsBySeverity()) {
+        if (alert.severity >= minimumSeverity) {
+            filtered.push_back(std::move(alert));
+        }
+    }
+    return filtered;
+}
+
 } // namespace qttutorial::defence

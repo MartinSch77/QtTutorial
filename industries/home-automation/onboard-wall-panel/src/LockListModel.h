@@ -2,6 +2,7 @@
 #pragma once
 
 #include "LockRegistry.h"
+#include "SceneRegistry.h"
 
 #include <QAbstractListModel>
 #include <QQmlEngine>
@@ -29,6 +30,10 @@ public:
     [[nodiscard]] QHash<int, QByteArray> roleNames() const override;
 
     Q_INVOKABLE void setLocked(int row, bool locked);
+    // Locks every door if the scene calls for it (Away/Night); a no-op for
+    // scenes that leave locks alone (Home/Morning). Logged as "Scene: <name>"
+    // in recentActivity, same as a manual toggle.
+    Q_INVOKABLE void applyScene(int sceneId);
 
     [[nodiscard]] QStringList recentActivity() const;
 

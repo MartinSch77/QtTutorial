@@ -72,6 +72,27 @@ private slots:
         QVERIFY(climbing.state().airspeedKt < level.state().airspeedKt);
     }
 
+    void sustainedHighThrottleClimbRaisesEngineTemp()
+    {
+        FlightDynamics cruise;
+        ControlInput cruiseInput;
+        cruiseInput.throttle = 0.3;
+        cruise.setControlInput(cruiseInput);
+
+        FlightDynamics climbing;
+        ControlInput climbInput;
+        climbInput.throttle = 1.0;
+        climbInput.elevator = 1.0;
+        climbing.setControlInput(climbInput);
+
+        for (int i = 0; i < 400; ++i) {
+            cruise.step(0.05);
+            climbing.step(0.05);
+        }
+        QVERIFY(climbing.state().engineTempC > cruise.state().engineTempC);
+        QVERIFY(climbing.state().engineTempC > FlightDynamics::kEngineTempNominalC);
+    }
+
     void ignoresNonPositiveTimeStep()
     {
         FlightDynamics dynamics;

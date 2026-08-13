@@ -64,6 +64,40 @@ private slots:
         }
         QVERIFY(!spy.isEmpty());
     }
+
+    void eventuallyRaisesACommsDegradationAlertAndTheTrackGoesStale()
+    {
+        FleetSimulator sim;
+        bool sawCommsAlert = false;
+        QObject::connect(&sim, &FleetSimulator::alertRaised, [&sawCommsAlert](const Alert& alert) {
+            if (alert.message.contains(QStringLiteral("comms link degraded"))) {
+                sawCommsAlert = true;
+            }
+        });
+
+        bool sawStaleTrack = false;
+        for (int i = 0; i < 6000 && !(sawCommsAlert && sawStaleTrack); ++i) {
+            sim.advance(1.0);
+            for (const Asset& asset : sim.assets()) {
+                if (asset.trackStale) {
+                    sawStaleTrack = true;
+                }
+            }
+        }
+        QVERIFY(sawCommsAlert);
+        QVERIFY(sawStaleTrack);
+    }
+
+    void freshTrackHasNoDataAge()
+    {
+        FleetSimulator sim;
+        sim.advance(1.0);
+        for (const Asset& asset : sim.assets()) {
+            if (!asset.trackStale) {
+                QCOMPARE(asset.dataAgeSeconds, 0.0);
+            }
+        }
+    }
 };
 
 QTEST_MAIN(TestFleetSimulator)

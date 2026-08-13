@@ -9,6 +9,8 @@ add_library(onboard_wall_panel_lib STATIC
     src/LockRegistry.cpp
     src/SecurityCenter.h
     src/SecurityCenter.cpp
+    src/SceneRegistry.h
+    src/SceneRegistry.cpp
 )
 target_include_directories(onboard_wall_panel_lib PUBLIC src)
 target_link_libraries(onboard_wall_panel_lib PUBLIC Qt6::Core)
@@ -43,4 +45,14 @@ qttutorial_add_app(onboard_wall_panel
         src/qml/LocksPanel.qml
         src/qml/BlindsPanel.qml
         src/qml/SecurityPanel.qml
+        src/qml/HouseIcon.qml
+        src/qml/LightbulbIcon.qml
+        src/qml/LockIcon.qml
+        src/qml/CameraIcon.qml
+        src/qml/DoorSensorIcon.qml
+        src/qml/ThermostatIcon.qml
+        src/qml/SunMoonIcon.qml
+        src/qml/SceneCard.qml
+        src/qml/ScenesPanel.qml
+        src/qml/CameraTile.qml
 )

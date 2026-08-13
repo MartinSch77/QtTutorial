@@ -22,25 +22,33 @@ MainWindow::MainWindow(QWidget* parent)
     : QMainWindow(parent)
     , m_historian(QStringLiteral("plant_scada_historian"), QStringLiteral(":memory:"))
     , m_tagModel(new TagTableModel(defaultTags(), this))
+    , m_overviewModel(new PlantOverviewModel(this))
     , m_tagTable(new QTableView(this))
+    , m_overview(new PlantOverviewWidget(this))
     , m_trend(new TrendWidget(this))
     , m_alarmList(new QListWidget(this))
     , m_tagSelector(new QComboBox(this))
     , m_simulationStart(QDateTime::currentDateTime())
+    , m_latestValues(defaultTags().size(), 0.0)
 {
     setWindowTitle(tr("Plant SCADA Historian"));
     m_historian.createSchema();
 
     for (const TagDefinition& tag : defaultTags()) {
-        m_tagSelector->addItem(tag.tagId);
+        m_tagSelector->addItem(tag.line + QStringLiteral(" — ") + tag.tagId);
     }
 
     m_tagTable->setModel(m_tagModel);
     m_tagTable->horizontalHeader()->setSectionResizeMode(QHeaderView::Stretch);
     m_tagTable->setSelectionBehavior(QAbstractItemView::SelectRows);
 
+    m_overview->setModel(m_overviewModel);
+
     auto* central = new QWidget(this);
     auto* mainLayout = new QVBoxLayout(central);
+
+    mainLayout->addWidget(new QLabel(tr("Plant overview"), this));
+    mainLayout->addWidget(m_overview);
 
     auto* topRow = new QHBoxLayout();
     topRow->addWidget(new QLabel(tr("Trend for:"), this));
@@ -65,7 +73,7 @@ MainWindow::MainWindow(QWidget* parent)
     connect(&m_timer, &QTimer::timeout, this, &MainWindow::onTick);
     m_timer.start(kTickIntervalMs);
 
-    resize(900, 640);
+    resize(960, 760);
 }
 
 void MainWindow::onTick()
@@ -78,6 +86,7 @@ void MainWindow::onTick()
         const TagDefinition& tag = tags[static_cast<std::size_t>(row)];
         const double value = valueAt(tag, tSeconds);
         m_tagModel->updateValue(row, value);
+        m_latestValues[static_cast<std::size_t>(row)] = value;
         m_historian.insertSample(tag.tagId, now, value);
 
         const Severity severity = evaluate(tag, value);
@@ -91,6 +100,7 @@ void MainWindow::onTick()
         }
     }
 
+    m_overviewModel->update(tags, m_latestValues);
     refreshTrend();
 }
 

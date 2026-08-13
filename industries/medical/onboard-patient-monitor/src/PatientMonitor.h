@@ -22,8 +22,11 @@ class PatientMonitor : public QObject {
     Q_PROPERTY(double spo2 READ spo2 NOTIFY vitalsChanged)
     Q_PROPERTY(double systolic READ systolic NOTIFY vitalsChanged)
     Q_PROPERTY(double diastolic READ diastolic NOTIFY vitalsChanged)
+    Q_PROPERTY(double respirationRate READ respirationRate NOTIFY vitalsChanged)
+    Q_PROPERTY(double temperature READ temperature NOTIFY vitalsChanged)
     Q_PROPERTY(QString alarmLevelText READ alarmLevelText NOTIFY vitalsChanged)
     Q_PROPERTY(QVariantList ecgSamples READ ecgSamples NOTIFY vitalsChanged)
+    Q_PROPERTY(QVariantList respirationSamples READ respirationSamples NOTIFY vitalsChanged)
 public:
     explicit PatientMonitor(QObject* parent = nullptr);
 
@@ -31,8 +34,11 @@ public:
     [[nodiscard]] double spo2() const { return m_spo2; }
     [[nodiscard]] double systolic() const { return m_systolic; }
     [[nodiscard]] double diastolic() const { return m_diastolic; }
+    [[nodiscard]] double respirationRate() const { return m_respirationRate; }
+    [[nodiscard]] double temperature() const { return m_temperature; }
     [[nodiscard]] QString alarmLevelText() const;
     [[nodiscard]] QVariantList ecgSamples() const { return m_ecgSamples; }
+    [[nodiscard]] QVariantList respirationSamples() const { return m_respirationSamples; }
 
 signals:
     void vitalsChanged();
@@ -47,8 +53,11 @@ private:
     double m_spo2 = 97.0;
     double m_systolic = 118.0;
     double m_diastolic = 75.0;
+    double m_respirationRate = 16.0;
+    double m_temperature = 37.0;
     AlarmLevel m_alarmLevel = AlarmLevel::Normal;
     QVariantList m_ecgSamples;
+    QVariantList m_respirationSamples;
 };
 
 } // namespace qttutorial::medical

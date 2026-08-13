@@ -20,5 +20,10 @@ qttutorial_add_app(agriculture_offboard_farm_operations_dashboard
         src/MainWindow.cpp
         src/FieldMapWidget.h
         src/FieldMapWidget.cpp
+        src/FieldStatusOverviewWidget.h
+        src/FieldStatusOverviewWidget.cpp
+        src/TrendChartWidget.h
+        src/TrendChartWidget.cpp
+        src/FarmIconPainter.h
     QT_LIBS Qt6::Widgets Qt6::Sql agriculture_offboard_farm_operations_dashboard_lib
 )

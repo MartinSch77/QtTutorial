@@ -16,7 +16,16 @@ namespace qttutorial::two_wheelers::fleet {
 class FleetModel : public QAbstractTableModel {
     Q_OBJECT
 public:
-    enum Column { IdColumn, LocationColumn, SpeedColumn, BatteryColumn, StatusColumn, ColumnCount };
+    enum Column {
+        IdColumn,
+        LocationColumn,
+        SpeedColumn,
+        BatteryColumn,
+        StatusColumn,
+        OdometerColumn,
+        MaintenanceColumn,
+        ColumnCount
+    };
 
     explicit FleetModel(int vehicleCount = 10, QObject* parent = nullptr);
 

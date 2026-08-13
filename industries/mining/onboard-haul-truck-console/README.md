@@ -7,10 +7,19 @@ persistence, just a real-time, animated HMI driven by a simulated haul cycle.
 ## What it demonstrates
 
 - A fully vector, hand-painted UI (`Gauge.qml`, `HaulStateStrip.qml`,
-  `TyrePressureGrid.qml`) using `QtQuick`'s `Canvas` item for the payload and
-  temperature gauges — no image assets, so it scales to any panel resolution.
+  `TyrePressureGrid.qml`, plus a small set of hand-drawn glyphs —
+  `HaulTruckIcon.qml`, `PayloadScaleIcon.qml`, `TyreIcon.qml`, `PitIcon.qml`,
+  `WarningTriangleIcon.qml`) using `QtQuick`'s `Canvas` item for every gauge,
+  band and icon — no image or icon-font assets, so it scales to any panel
+  resolution. `Canvas` was used deliberately over `QtQuick.Shapes`: this
+  repo's target Qt install does not ship the Shapes QML plugin, so pulling it
+  in would mean adding a Qt component the app does not otherwise need.
 - A prominent four-segment haul-cycle banner (Loading / Hauling / Dumping /
-  Returning) and a six-tyre pressure grid, all bound live to C++ state.
+  Returning), a six-tyre pressure-and-temperature grid (each cell painted with
+  a `TyreIcon` that sweeps from cool to hot), and a speed gauge whose dial
+  paints a pale "expected range" band for the truck's current haul-cycle
+  phase — a truck crawling while nominally "hauling" lights up an advisory
+  banner even before any single reading looks alarming on its own.
 - A domain model (`HaulCycleSimulator`) that drives an explicit small state
   machine over the four haul-cycle phases with plausible dwell times (loading
   30 s, hauling 90 s, dumping 15 s, returning 60 s), and derives every other
@@ -22,12 +31,35 @@ persistence, just a real-time, animated HMI driven by a simulated haul cycle.
   temperature climbs while loading and hauling a full load and eases off while
   returning empty; retarder temperature climbs specifically while descending
   the haul road into the dump point (modelled as the last portion of hauling)
-  and through dumping, then cools on the way back; and tyre pressure creeps up
-  slightly with payload rather than varying independently.
+  and through dumping, then cools on the way back; road speed follows a
+  distinct plausible profile per phase (creeping under the shovel, cruising
+  loaded on the haul road, braking into the dump point, then cruising faster
+  empty on the return leg); fuel burn is derived from *both* current payload
+  and current speed, so a loaded truck climbing the haul road burns
+  noticeably more fuel than an empty one coasting back; and tyre pressure and
+  tyre temperature both creep up with payload (rear duals running hotter than
+  the front steer tyres) rather than varying independently.
+
+  The haul-cycle phases were already modelled as an explicit `enum class
+  HaulState` driving all derived signals before this pass, so a separate
+  `QStateMachine` was not introduced — it would duplicate state the simulator
+  already tracks unambiguously.
 - `HaulTruckTelemetry` is a thin `QObject`/`QML_ELEMENT` façade that steps the
   simulator on a `QTimer` and republishes state via `Q_PROPERTY`; all the
   actual logic lives in `HaulCycleSimulator`, which has no Qt GUI dependencies
   and is unit tested headlessly.
+
+## Design reference
+
+The gauge cluster, haul-cycle state strip, tyre grid and payload-envelope
+styling take **style inspiration only** from the genre of autonomous-haulage
+operator consoles popularised by systems such as Caterpillar MineStar and
+Komatsu FrontRunner — dark cab HMIs built around circular analogue-style
+gauges, a payload scale, per-tyre health, and a haul-cycle status readout.
+No Caterpillar or Komatsu trademark, logo, wordmark, colour system or exact
+screen layout is reproduced anywhere in this example; every icon and gauge
+here is an original, hand-painted `Canvas` drawing created for this
+tutorial.
 
 ## Qt modules/APIs exercised
 
@@ -59,5 +91,7 @@ cmake --build build --target mining_onboard_haul_truck_console
 ## Tests
 
 See `tests/industries/mining/onboard-haul-truck-console/`, which exercises
-`HaulCycleSimulator`'s haul-cycle ordering, payload/overload behaviour, and
-engine/retarder temperature response without any Qt GUI dependency.
+`HaulCycleSimulator`'s haul-cycle ordering, payload/overload behaviour,
+engine/retarder temperature response, per-phase speed profile, the
+payload/speed-correlated fuel-burn model, and the payload-correlated tyre
+temperature model — all without any Qt GUI dependency.

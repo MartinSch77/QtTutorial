@@ -73,6 +73,15 @@ QStringList RemoteHomeController::activityLog() const
     return lines;
 }
 
+QVariantList RemoteHomeController::energyHistory() const
+{
+    QVariantList list;
+    for (const EnergySample& sample : m_energyHistory.samples()) {
+        list << sample.watts;
+    }
+    return list;
+}
+
 void RemoteHomeController::setLightOn(const QString& room, bool on)
 {
     m_client.sendCommand(Command{.type = QStringLiteral("setLight"), .target = room, .value = on ? 1.0 : 0.0});
@@ -113,13 +122,16 @@ void RemoteHomeController::handleSnapshot(const Snapshot& snapshot)
     const QStringList changes = describeChanges(m_latest, snapshot);
     m_latest = snapshot;
 
+    const qint64 now = QDateTime::currentMSecsSinceEpoch();
+
     if (!changes.isEmpty()) {
-        const qint64 now = QDateTime::currentMSecsSinceEpoch();
         for (const QString& change : changes) {
             m_activityStore.record(change, now);
         }
         emit activityLogChanged();
     }
+
+    m_energyHistory.addSample(EnergyMonitor::estimateWatts(snapshot), now);
 
     emit stateChanged();
 }

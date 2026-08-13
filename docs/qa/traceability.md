@@ -51,3 +51,5 @@ framework-tour module or industry example.
 | `showcases/stock-tracker` | yes | REQ-SHOWCASE-01, REQ-SHOWCASE-02 |
 
 All 43 module(s)/example(s) have a matching test directory with a CMakeLists.txt.
+
+trace_report: OK — 43 module(s)/example(s) all traced.

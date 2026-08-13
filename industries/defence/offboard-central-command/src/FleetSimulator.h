@@ -3,6 +3,7 @@
 
 #include "Asset.h"
 #include "AlertLog.h"
+#include "CommsLinkQualityModel.h"
 
 #include <QObject>
 
@@ -33,11 +34,26 @@ signals:
 private:
     void seedFleet();
     [[nodiscard]] static QString classifyHealth(double value);
+    [[nodiscard]] static QString classifyComms(double value);
 
     std::vector<Asset> m_assets;
     std::vector<double> m_healthValues;
     std::vector<double> m_healthDriftPerSecond;
     std::vector<double> m_speedKmh;
+
+    // Comms-link simulation, correlated with (but independent of) overall
+    // health: a random-walk quality value per asset, a per-asset "true"
+    // position that always keeps moving, and a tick counter deciding when
+    // the *displayed* position/telemetry actually refreshes. See
+    // CommsLinkQualityModel for the delivery-cadence formula.
+    std::vector<double> m_commsQuality;
+    std::vector<double> m_commsDriftPerSecond;
+    std::vector<QString> m_previousCommsHealth;
+    std::vector<double> m_trueXKm;
+    std::vector<double> m_trueYKm;
+    std::vector<double> m_trueHeadingDeg;
+    std::vector<int> m_ticksSinceUpdate;
+
     std::mt19937 m_rng{12345};
 };
 

@@ -5,6 +5,8 @@ add_library(onboard_pfd_lib STATIC
     src/FlightDynamics.cpp
     src/FlightDataSimulator.h
     src/FlightDataSimulator.cpp
+    src/AnnunciatorLogic.h
+    src/AnnunciatorLogic.cpp
 )
 target_include_directories(onboard_pfd_lib PUBLIC src)
 target_link_libraries(onboard_pfd_lib PUBLIC Qt6::Core)
@@ -24,5 +26,9 @@ qttutorial_add_app(onboard_primary_flight_display
         src/HeadingIndicator.cpp
         src/VerticalSpeedIndicator.h
         src/VerticalSpeedIndicator.cpp
+        src/CompassRose.h
+        src/CompassRose.cpp
+        src/AnnunciatorPanel.h
+        src/AnnunciatorPanel.cpp
     QT_LIBS Qt6::Widgets onboard_pfd_lib
 )

@@ -17,6 +17,9 @@ constexpr double kVerticalSpeedTimeConstantS = 4.0;
 constexpr double kAirspeedTimeConstantS = 6.0;
 constexpr double kTurnRateDegPerSecPerDegBank = 0.12;
 constexpr double kKnotsToFtPerMin = 101.3;
+constexpr double kEngineTempTimeConstantS = 12.0;
+constexpr double kEngineTempPerThrottleC = 300.0;
+constexpr double kEngineTempClimbPenaltyPerDegC = 6.0;
 
 double approach(double current, double target, double dt, double timeConstant)
 {
@@ -57,6 +60,13 @@ void FlightDynamics::step(double dtSeconds)
     const double climbPenalty = m_state.pitchDeg * 2.0;
     const double targetAirspeed = std::clamp(120.0 + throttle * 220.0 - climbPenalty, 60.0, 400.0);
     m_state.airspeedKt = approach(m_state.airspeedKt, targetAirspeed, dtSeconds, kAirspeedTimeConstantS);
+
+    // Engine temperature couples to the same throttle input, plus a small extra
+    // penalty for climbing (positive pitch), so a sustained high-power climb -
+    // not random jitter - is what pushes it toward the caution band.
+    const double climbTempPenalty = std::max(0.0, m_state.pitchDeg) * kEngineTempClimbPenaltyPerDegC;
+    const double targetEngineTemp = kEngineTempNominalC + throttle * kEngineTempPerThrottleC + climbTempPenalty;
+    m_state.engineTempC = approach(m_state.engineTempC, targetEngineTemp, dtSeconds, kEngineTempTimeConstantS);
 }
 
 } // namespace qttutorial::avionics

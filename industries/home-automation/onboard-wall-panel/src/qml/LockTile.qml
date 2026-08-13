@@ -18,8 +18,14 @@ Rectangle {
 
     Column {
         anchors.centerIn: parent
-        spacing: 8
+        spacing: 6
 
+        LockIcon {
+            width: 28
+            height: 28
+            anchors.horizontalCenter: parent.horizontalCenter
+            locked: root.locked
+        }
         Text {
             anchors.horizontalCenter: parent.horizontalCenter
             text: root.lockName

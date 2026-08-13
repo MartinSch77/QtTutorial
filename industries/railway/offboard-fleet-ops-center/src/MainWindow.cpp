@@ -19,9 +19,11 @@ constexpr int kTickIntervalMs = 1000;
 MainWindow::MainWindow(QWidget* parent)
     : QMainWindow(parent)
     , m_history(QStringLiteral("fleet_ops_history"), QStringLiteral(":memory:"))
+    , m_map(new FleetMapWidget(this))
     , m_model(new FleetTableModel(this))
     , m_table(new QTableView(this))
     , m_trend(new DelayTrendWidget(this))
+    , m_networkTrend(new DelayTrendWidget(this))
     , m_trainSelector(new QComboBox(this))
     , m_simulationStart(QDateTime::currentDateTime())
 {
@@ -45,9 +47,29 @@ MainWindow::MainWindow(QWidget* parent)
     topRow->addStretch();
     mainLayout->addLayout(topRow);
 
+    auto* mapAndTable = new QSplitter(Qt::Horizontal, this);
+    mapAndTable->addWidget(m_map);
+    mapAndTable->addWidget(m_table);
+    mapAndTable->setStretchFactor(0, 1);
+    mapAndTable->setStretchFactor(1, 2);
+
+    auto* trends = new QSplitter(Qt::Horizontal, this);
+    auto* trainTrendPane = new QWidget(this);
+    auto* trainTrendLayout = new QVBoxLayout(trainTrendPane);
+    trainTrendLayout->setContentsMargins(0, 0, 0, 0);
+    trainTrendLayout->addWidget(new QLabel(tr("Selected train"), this));
+    trainTrendLayout->addWidget(m_trend);
+    auto* networkTrendPane = new QWidget(this);
+    auto* networkTrendLayout = new QVBoxLayout(networkTrendPane);
+    networkTrendLayout->setContentsMargins(0, 0, 0, 0);
+    networkTrendLayout->addWidget(new QLabel(tr("Network-wide punctuality"), this));
+    networkTrendLayout->addWidget(m_networkTrend);
+    trends->addWidget(trainTrendPane);
+    trends->addWidget(networkTrendPane);
+
     auto* splitter = new QSplitter(Qt::Vertical, this);
-    splitter->addWidget(m_table);
-    splitter->addWidget(m_trend);
+    splitter->addWidget(mapAndTable);
+    splitter->addWidget(trends);
     mainLayout->addWidget(splitter);
     setCentralWidget(central);
 
@@ -55,7 +77,7 @@ MainWindow::MainWindow(QWidget* parent)
     connect(&m_timer, &QTimer::timeout, this, &MainWindow::onTick);
     m_timer.start(kTickIntervalMs);
 
-    resize(960, 680);
+    resize(1180, 820);
 }
 
 void MainWindow::onTick()
@@ -65,6 +87,7 @@ void MainWindow::onTick()
 
     std::vector<TrainState> states = fleetStateAt(m_config, tSeconds);
     m_model->setStates(states);
+    m_map->setFleet(m_config, states);
 
     for (const TrainState& state : states) {
         RunSample sample;
@@ -76,6 +99,7 @@ void MainWindow::onTick()
     }
 
     refreshTrend();
+    refreshNetworkTrend();
 }
 
 void MainWindow::onTrainSelectionChanged(int row)
@@ -93,6 +117,24 @@ void MainWindow::refreshTrend()
     const QDateTime to = QDateTime::currentDateTime();
     const QDateTime from = to.addSecs(-1800);
     m_trend->setSamples(m_history.samplesInRange(trainId, from, to));
+}
+
+void MainWindow::refreshNetworkTrend()
+{
+    constexpr qint64 kBucketSeconds = 30;
+    const QDateTime to = QDateTime::currentDateTime();
+    const QDateTime from = to.addSecs(-1800);
+
+    const auto series = m_history.networkDelaySeries(from, to, kBucketSeconds);
+    std::vector<RunSample> samples;
+    samples.reserve(series.size());
+    for (const auto& [bucketStart, averageDelayMinutes] : series) {
+        RunSample sample;
+        sample.timestamp = bucketStart;
+        sample.delayMinutes = averageDelayMinutes;
+        samples.push_back(sample);
+    }
+    m_networkTrend->setSamples(samples);
 }
 
 } // namespace qttutorial::fleet_ops

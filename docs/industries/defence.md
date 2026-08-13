@@ -82,16 +82,38 @@ that aggregates all of them:
   back from the edge of the surveillance area; detection boxes bounce
   within the simulated video frame.
 - Hand-painted QML `Canvas` instrumentation (the radar plot and HUD compass
-  strip) rather than static images or Qt Charts/Graphs.
+  strip) rather than static images or Qt Charts/Graphs, including a shared
+  `Icons.js` library of procedurally-drawn vector glyphs (track blips
+  shaped by domain, a compass rose, a warning triangle, a shield/status
+  glyph and antenna/signal bars) reused across the onboard panels.
+- A fifth panel, **Comms & Data Link**, and a `DataLinkTrackModel` class
+  modelling a couple of "off-board" tracks received over a simulated
+  tactical data link. Their displayed position only refreshes when the
+  link "delivers" that tick, so a degraded Comms subsystem value plausibly
+  shows up as intermittent, aging track data elsewhere in the same app - a
+  data-quality effect only, never anything about engaging the tracked
+  object.
 
 **Offboard Central Command Dashboard**
 - A believable mixed-fleet simulation (`FleetSimulator`) with one asset
   seeded with a slow drift fault, so the alerting has something genuine to
   escalate.
 - Severity-ordered alerting (`AlertLog`), unit-tested independent of Qt
-  Widgets.
+  Widgets, with a severity filter (All / Caution and above / Critical only)
+  on the dashboard's alert-log view.
 - A hand-painted `QPainter` tactical map with a distinct icon per asset
-  type, colored by health.
+  type, colored by health, plus a procedurally-drawn compass-rose overlay,
+  a warning-triangle glyph on stale tracks, and a comms/antenna glyph on
+  assets with a degraded data link.
+- A second, independent simulated fault: a comms-link quality value per
+  asset (`CommsLinkQualityModel`/`FleetSimulator`) that, when it degrades,
+  makes that asset's displayed position/heading go stale/intermittent
+  rather than continuously updating - a data-quality effect only, distinct
+  from the health-drift fault, and carrying no targeting information of
+  any kind.
+- A green/amber/red fleet-readiness summary board (`FleetReadiness`,
+  `FleetReadinessBoard`), a simple counted roll-up of the same health
+  classifications shown per-asset elsewhere in the dashboard.
 - SQLite-backed asset history via QtSql, written and read exclusively
   through parameterized `QSqlQuery::prepare`/`bindValue` statements,
   following the same pattern as `industries/space/offboard-mission-control`.

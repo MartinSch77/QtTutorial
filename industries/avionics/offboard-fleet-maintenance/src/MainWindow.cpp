@@ -2,8 +2,10 @@
 #include "MainWindow.h"
 
 #include "FleetTableModel.h"
+#include "MaintenanceOverviewWidget.h"
 #include "TrendWidget.h"
 
+#include <QComboBox>
 #include <QDateTime>
 #include <QDir>
 #include <QGridLayout>
@@ -13,7 +15,24 @@
 #include <QStandardPaths>
 #include <QTableView>
 
+#include <iterator>
+
 namespace qttutorial::avionics {
+
+namespace {
+struct TrendParameter {
+    const char* key;
+    const char* label;
+    double nominalLow;
+    double nominalHigh;
+};
+
+constexpr TrendParameter kTrendParameters[] = {
+    {"engine1_vibration_ips", "Eng1 Vibration (ips)", 0.0, 0.45},
+    {"engine1_egt_margin_c", "Eng1 EGT Margin (C)", 20.0, 80.0},
+    {"engine1_oil_pressure_psi", "Eng1 Oil Pressure (psi)", 45.0, 85.0},
+};
+} // namespace
 
 MainWindow::MainWindow(QWidget* parent)
     : QWidget(parent)
@@ -21,6 +40,8 @@ MainWindow::MainWindow(QWidget* parent)
     , m_fleetView(new QTableView(this))
     , m_taskList(new QListWidget(this))
     , m_trendWidget(new TrendWidget(this))
+    , m_trendParameterSelector(new QComboBox(this))
+    , m_maintenanceOverview(new MaintenanceOverviewWidget(this))
     , m_selectedLabel(new QLabel(this))
     , m_timer(new QTimer(this))
 {
@@ -38,27 +59,41 @@ MainWindow::MainWindow(QWidget* parent)
     m_fleetView->setSelectionBehavior(QAbstractItemView::SelectRows);
     m_fleetView->setSelectionMode(QAbstractItemView::SingleSelection);
 
-    m_selectedLabel->setText(tr("Select an aircraft to view its engine vibration trend."));
+    m_selectedLabel->setText(tr("Select an aircraft to view a trend."));
+
+    for (const auto& parameter : kTrendParameters) {
+        m_trendParameterSelector->addItem(QString::fromLatin1(parameter.label));
+    }
 
     auto* layout = new QGridLayout(this);
     layout->addWidget(new QLabel(tr("Fleet"), this), 0, 0);
     layout->addWidget(m_fleetView, 1, 0, 1, 2);
     layout->addWidget(new QLabel(tr("Maintenance Tasks"), this), 2, 0);
     layout->addWidget(m_taskList, 3, 0);
-    layout->addWidget(m_selectedLabel, 2, 1);
+
+    auto* trendHeaderLayout = new QGridLayout();
+    trendHeaderLayout->addWidget(m_selectedLabel, 0, 0);
+    trendHeaderLayout->addWidget(m_trendParameterSelector, 0, 1);
+    layout->addLayout(trendHeaderLayout, 2, 1);
     layout->addWidget(m_trendWidget, 3, 1);
+
+    layout->addWidget(new QLabel(tr("Fleet-Wide Maintenance Due"), this), 4, 0, 1, 2);
+    layout->addWidget(m_maintenanceOverview, 5, 0, 1, 2);
+
     layout->setRowStretch(1, 2);
     layout->setRowStretch(3, 3);
+    layout->setRowStretch(5, 2);
 
     connect(m_fleetView->selectionModel(), &QItemSelectionModel::selectionChanged, this,
             &MainWindow::onSelectionChanged);
+    connect(m_trendParameterSelector, &QComboBox::currentIndexChanged, this, &MainWindow::updateTrend);
     connect(&m_simulator, &FleetSimulator::maintenanceTaskCreated, this, &MainWindow::onMaintenanceTaskCreated);
 
     connect(m_timer, &QTimer::timeout, this, &MainWindow::onTick);
     m_timer->start(500);
     onTick();
 
-    resize(900, 560);
+    resize(960, 760);
 }
 
 void MainWindow::onTick()
@@ -67,19 +102,39 @@ void MainWindow::onTick()
     m_fleetModel->setAircraft(m_simulator.aircraft());
 
     const QDateTime now = QDateTime::currentDateTimeUtc();
-    for (const Aircraft& aircraft : m_simulator.aircraft()) {
-        ParameterSample sample;
-        sample.aircraftTail = aircraft.tailNumber;
-        sample.parameterName = QStringLiteral("engine1_vibration_ips");
-        sample.value = aircraft.engine1.vibrationIps;
-        sample.timestamp = now;
-        static_cast<void>(m_history->recordSample(sample));
+    const auto& fleet = m_simulator.aircraft();
+    for (const Aircraft& aircraft : fleet) {
+        const struct { const char* name; double value; } samples[] = {
+            {"engine1_vibration_ips", aircraft.engine1.vibrationIps},
+            {"engine1_egt_margin_c", aircraft.engine1.egtMarginC},
+            {"engine1_oil_pressure_psi", aircraft.engine1.oilPressurePsi},
+        };
+        for (const auto& entry : samples) {
+            ParameterSample sample;
+            sample.aircraftTail = aircraft.tailNumber;
+            sample.parameterName = QString::fromLatin1(entry.name);
+            sample.value = entry.value;
+            sample.timestamp = now;
+            static_cast<void>(m_history->recordSample(sample));
+        }
     }
 
-    onSelectionChanged();
+    std::vector<FleetOverviewEntry> overviewEntries;
+    overviewEntries.reserve(fleet.size());
+    for (std::size_t i = 0; i < fleet.size(); ++i) {
+        overviewEntries.push_back({fleet[i].tailNumber, m_simulator.inspectionStatus(i)});
+    }
+    m_maintenanceOverview->setEntries(std::move(overviewEntries));
+
+    updateTrend();
 }
 
 void MainWindow::onSelectionChanged()
+{
+    updateTrend();
+}
+
+void MainWindow::updateTrend()
 {
     const QModelIndexList selected = m_fleetView->selectionModel()->selectedRows();
     if (selected.isEmpty()) {
@@ -89,15 +144,21 @@ void MainWindow::onSelectionChanged()
     if (!aircraft) {
         return;
     }
-    m_selectedLabel->setText(tr("Engine 1 vibration trend for %1").arg(aircraft->tailNumber));
 
-    const auto samples = m_history->history(aircraft->tailNumber, QStringLiteral("engine1_vibration_ips"), 60);
+    const int parameterIndex = m_trendParameterSelector->currentIndex();
+    if (parameterIndex < 0 || parameterIndex >= static_cast<int>(std::size(kTrendParameters))) {
+        return;
+    }
+    const TrendParameter& parameter = kTrendParameters[parameterIndex];
+    m_selectedLabel->setText(tr("%1 for %2").arg(QString::fromLatin1(parameter.label), aircraft->tailNumber));
+
+    const auto samples = m_history->history(aircraft->tailNumber, QString::fromLatin1(parameter.key), 60);
     std::vector<double> values;
     values.reserve(samples.size());
     for (auto it = samples.rbegin(); it != samples.rend(); ++it) {
         values.push_back(it->value);
     }
-    m_trendWidget->setSeries(std::move(values), 0.0, 0.45);
+    m_trendWidget->setSeries(std::move(values), parameter.nominalLow, parameter.nominalHigh);
 }
 
 void MainWindow::onMaintenanceTaskCreated(const MaintenanceTask& task)

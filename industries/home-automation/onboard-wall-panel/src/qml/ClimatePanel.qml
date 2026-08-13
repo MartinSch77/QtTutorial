@@ -28,18 +28,29 @@ Column {
                 {label: qsTr("Cool"), mode: 2},
             ]
             Rectangle {
-                width: 90
+                width: 110
                 height: 40
                 radius: 8
                 color: root.thermostat.mode === modelData.mode ? "#39c0ff" : "#1c212b"
                 border.color: "#2a3140"
                 border.width: 1
 
-                Text {
+                Row {
                     anchors.centerIn: parent
-                    text: modelData.label
-                    color: root.thermostat.mode === modelData.mode ? "#0d1117" : "#e6edf3"
-                    font.bold: true
+                    spacing: 6
+
+                    ThermostatIcon {
+                        width: 18
+                        height: 18
+                        anchors.verticalCenter: parent.verticalCenter
+                        mode: modelData.mode
+                    }
+                    Text {
+                        anchors.verticalCenter: parent.verticalCenter
+                        text: modelData.label
+                        color: root.thermostat.mode === modelData.mode ? "#0d1117" : "#e6edf3"
+                        font.bold: true
+                    }
                 }
                 MouseArea {
                     anchors.fill: parent

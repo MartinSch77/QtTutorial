@@ -5,6 +5,7 @@
 #include <QSqlDatabase>
 #include <QString>
 
+#include <utility>
 #include <vector>
 
 namespace qttutorial::fleet_ops {
@@ -38,6 +39,15 @@ public:
                                                          const QDateTime& to) const;
 
     [[nodiscard]] double averageDelayInRange(const QDateTime& from, const QDateTime& to) const;
+
+    // The fleet-wide average delay, bucketed into `bucketSeconds`-wide
+    // windows across [from, to] — the basis for a network-wide punctuality
+    // trend (as opposed to `averageDelayInRange`'s single scalar), returned
+    // as (bucket start time, average delay minutes across all trains in
+    // that bucket) pairs, in order, omitting empty buckets.
+    [[nodiscard]] std::vector<std::pair<QDateTime, double>> networkDelaySeries(const QDateTime& from,
+                                                                                const QDateTime& to,
+                                                                                qint64 bucketSeconds) const;
 
 private:
     QString m_connectionName;

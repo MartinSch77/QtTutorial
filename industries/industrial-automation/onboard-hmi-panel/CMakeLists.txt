@@ -20,5 +20,12 @@ qttutorial_add_app(onboard_hmi_panel
         src/HmiApp.cpp
     QT_LIBS Qt6::Gui Qt6::Qml Qt6::Quick onboard_hmi_panel_lib
     QML_MODULE_URI IndustrialAutomation.OnboardHmiPanel
-    QML_SOURCES qml/Main.qml
+    QML_SOURCES
+        qml/Main.qml
+        qml/AlarmAckPanel.qml
+        qml/GearIcon.qml
+        qml/ValveIcon.qml
+        qml/MotorIcon.qml
+        qml/ConveyorIcon.qml
+        qml/TankIcon.qml
 )

@@ -3,6 +3,8 @@ find_package(Qt6 REQUIRED COMPONENTS Quick Qml)
 add_library(onboard_patient_monitor_lib STATIC
     src/EcgWaveformGenerator.h
     src/EcgWaveformGenerator.cpp
+    src/RespirationWaveformGenerator.h
+    src/RespirationWaveformGenerator.cpp
     src/VitalsSimulator.h
     src/VitalsSimulator.cpp
     src/AlarmStateMachine.h
@@ -23,5 +25,7 @@ qttutorial_add_app(onboard_patient_monitor
     QML_SOURCES
         src/qml/Main.qml
         src/qml/EcgCanvas.qml
+        src/qml/RespirationCanvas.qml
         src/qml/VitalTile.qml
+        src/qml/ClinicalIcon.qml
 )

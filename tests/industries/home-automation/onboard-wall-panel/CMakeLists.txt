@@ -21,3 +21,9 @@ qttutorial_add_test(test_security_center
     LIB onboard_wall_panel_lib
     QT_LIBS Qt6::Core
 )
+
+qttutorial_add_test(test_scene_registry
+    SOURCES test_scene_registry.cpp
+    LIB onboard_wall_panel_lib
+    QT_LIBS Qt6::Core
+)

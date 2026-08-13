@@ -1,10 +1,13 @@
 // SPDX-License-Identifier: MIT
 #include "DelayCalculator.h"
+#include "FleetMapGeometry.h"
 #include "FleetSimulator.h"
 #include "FleetTableModel.h"
 #include "RunHistoryStore.h"
 
 #include <QTest>
+
+#include <cmath>
 
 using namespace qttutorial::fleet_ops;
 
@@ -56,6 +59,38 @@ private slots:
         }
     }
 
+    void positionOnLoopPlacesStartAtTopAndSweepsClockwise()
+    {
+        const MapPoint start = positionOnLoop(0.0, 40.0, 100.0);
+        QVERIFY(std::abs(start.x) < 1e-9);
+        QVERIFY(start.y < 0.0); // top of the circle
+
+        const MapPoint quarter = positionOnLoop(10.0, 40.0, 100.0);
+        QVERIFY(quarter.x > 0.0); // a quarter of the way round is to the right
+        QVERIFY(std::abs(quarter.y) < 1.0);
+
+        const MapPoint half = positionOnLoop(20.0, 40.0, 100.0);
+        QVERIFY(std::abs(half.x) < 1e-9);
+        QVERIFY(half.y > 0.0); // bottom of the circle
+    }
+
+    void positionOnLoopWrapsPastTheLoopLength()
+    {
+        const MapPoint atZero = positionOnLoop(0.0, 40.0, 100.0);
+        const MapPoint wrapped = positionOnLoop(40.0, 40.0, 100.0);
+        QVERIFY(std::abs(atZero.x - wrapped.x) < 1e-6);
+        QVERIFY(std::abs(atZero.y - wrapped.y) < 1e-6);
+    }
+
+    void positionOnLoopStaysOnTheCircleRegardlessOfPosition()
+    {
+        for (double positionKm = 0.0; positionKm < 100.0; positionKm += 7.0) {
+            const MapPoint point = positionOnLoop(positionKm, 40.0, 100.0);
+            const double radius = std::sqrt(point.x * point.x + point.y * point.y);
+            QVERIFY(std::abs(radius - 100.0) < 1e-6);
+        }
+    }
+
     void runHistoryStoreRoundTripsAndAveragesDelay()
     {
         RunHistoryStore store(QStringLiteral("test_conn_fleet_roundtrip"));
@@ -75,6 +110,28 @@ private slots:
 
         const double avg = store.averageDelayInRange(base, base.addSecs(120));
         QCOMPARE(avg, 3.0);
+    }
+
+    void runHistoryStoreNetworkDelaySeriesBucketsAcrossTrains()
+    {
+        RunHistoryStore store(QStringLiteral("test_conn_fleet_network_series"));
+        QVERIFY(store.isOpen());
+        QVERIFY(store.createSchema());
+
+        const QDateTime base = QDateTime::fromSecsSinceEpoch(1'700'000'000);
+        // Two trains, two samples each, both trains in the same first
+        // 30-second bucket and both in the same second bucket, so the
+        // network series should average across trains within each bucket.
+        QVERIFY(store.insertSample(QStringLiteral("T-01"), RunSample{base, 0.0, 90.0, 2.0}));
+        QVERIFY(store.insertSample(QStringLiteral("T-02"), RunSample{base.addSecs(5), 0.0, 90.0, 6.0}));
+        QVERIFY(store.insertSample(QStringLiteral("T-01"), RunSample{base.addSecs(40), 0.0, 90.0, 10.0}));
+        QVERIFY(store.insertSample(QStringLiteral("T-02"), RunSample{base.addSecs(45), 0.0, 90.0, 20.0}));
+
+        const auto series = store.networkDelaySeries(base, base.addSecs(120), 30);
+        QCOMPARE(series.size(), std::size_t(2));
+        QCOMPARE(series[0].second, 4.0);  // average of 2.0 and 6.0
+        QCOMPARE(series[1].second, 15.0); // average of 10.0 and 20.0
+        QVERIFY(series[0].first < series[1].first);
     }
 
     void fleetTableModelReflectsUpdatedStates()

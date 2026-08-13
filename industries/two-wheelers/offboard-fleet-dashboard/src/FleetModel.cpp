@@ -39,10 +39,27 @@ int FleetModel::columnCount(const QModelIndex& parent) const
 
 QVariant FleetModel::data(const QModelIndex& index, int role) const
 {
-    if (!index.isValid() || index.row() >= m_vehicleCount || role != Qt::DisplayRole) {
+    if (!index.isValid() || index.row() >= m_vehicleCount) {
         return {};
     }
     const VehicleSample& sample = m_samples[static_cast<std::size_t>(index.row())];
+
+    if (role == Qt::UserRole) {
+        // Raw values for FleetIconDelegate, which needs the numeric/boolean
+        // value rather than the formatted display text.
+        switch (index.column()) {
+        case BatteryColumn:
+            return sample.batteryPercent;
+        case MaintenanceColumn:
+            return sample.maintenanceDue;
+        default:
+            return {};
+        }
+    }
+
+    if (role != Qt::DisplayRole) {
+        return {};
+    }
     switch (index.column()) {
     case IdColumn:
         return sample.id;
@@ -54,6 +71,10 @@ QVariant FleetModel::data(const QModelIndex& index, int role) const
         return QStringLiteral("%1 %").arg(sample.batteryPercent, 0, 'f', 1);
     case StatusColumn:
         return riderStatusLabel(sample.status);
+    case OdometerColumn:
+        return QStringLiteral("%1 km").arg(sample.odometerKm, 0, 'f', 0);
+    case MaintenanceColumn:
+        return sample.maintenanceDue ? QStringLiteral("Due") : QStringLiteral("OK");
     default:
         return {};
     }
@@ -75,6 +96,10 @@ QVariant FleetModel::headerData(int section, Qt::Orientation orientation, int ro
         return QStringLiteral("Battery");
     case StatusColumn:
         return QStringLiteral("Status");
+    case OdometerColumn:
+        return QStringLiteral("Odometer");
+    case MaintenanceColumn:
+        return QStringLiteral("Service");
     default:
         return {};
     }

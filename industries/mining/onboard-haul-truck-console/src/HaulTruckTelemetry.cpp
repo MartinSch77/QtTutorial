@@ -42,4 +42,29 @@ QVariantList HaulTruckTelemetry::tyrePressuresKPa() const
     return pressures;
 }
 
+QVariantList HaulTruckTelemetry::tyreTempsC() const
+{
+    QVariantList temps;
+    for (const double temp : m_state.tyreTempsC) {
+        temps << temp;
+    }
+    return temps;
+}
+
+double HaulTruckTelemetry::speedExpectedMinKph() const
+{
+    return HaulCycleSimulator::expectedSpeedRangeAt(m_state.haulState).minKph;
+}
+
+double HaulTruckTelemetry::speedExpectedMaxKph() const
+{
+    return HaulCycleSimulator::expectedSpeedRangeAt(m_state.haulState).maxKph;
+}
+
+bool HaulTruckTelemetry::speedOutOfRange() const
+{
+    const SpeedRangeKph range = HaulCycleSimulator::expectedSpeedRangeAt(m_state.haulState);
+    return m_state.speedKph < range.minKph - 1.0 || m_state.speedKph > range.maxKph + 1.0;
+}
+
 } // namespace qttutorial::mining

@@ -23,7 +23,9 @@ OperationHistoryStore::OperationHistoryStore(const QString& databasePath, const 
             "field_id TEXT NOT NULL,"
             "timestamp_ms INTEGER NOT NULL,"
             "coverage_percent REAL NOT NULL,"
-            "status TEXT NOT NULL"
+            "status TEXT NOT NULL,"
+            "engine_load_percent REAL NOT NULL DEFAULT -1,"
+            "fuel_level_percent REAL NOT NULL DEFAULT -1"
             ")"))) {
         m_db.close();
     }
@@ -41,46 +43,68 @@ bool OperationHistoryStore::isOpen() const
 }
 
 bool OperationHistoryStore::recordSample(const QString& fieldId, qint64 timestampMs, double coveragePercent,
-                                          const QString& status)
+                                          const QString& status, double engineLoadPercent, double fuelLevelPercent)
 {
     if (!m_db.isOpen()) {
         return false;
     }
     QSqlQuery query(m_db);
     if (!query.prepare(QStringLiteral(
-            "INSERT INTO operation_history (field_id, timestamp_ms, coverage_percent, status) "
-            "VALUES (?, ?, ?, ?)"))) {
+            "INSERT INTO operation_history "
+            "(field_id, timestamp_ms, coverage_percent, status, engine_load_percent, fuel_level_percent) "
+            "VALUES (?, ?, ?, ?, ?, ?)"))) {
         return false;
     }
     query.addBindValue(fieldId);
     query.addBindValue(timestampMs);
     query.addBindValue(coveragePercent);
     query.addBindValue(status);
+    query.addBindValue(engineLoadPercent);
+    query.addBindValue(fuelLevelPercent);
     return query.exec();
 }
 
-std::vector<double> OperationHistoryStore::recentCoverage(const QString& fieldId, int limit) const
+namespace {
+
+std::vector<double> recentColumn(const QSqlDatabase& db, const QString& column, const QString& fieldId, int limit)
 {
-    std::vector<double> coverage;
-    if (!m_db.isOpen()) {
-        return coverage;
+    std::vector<double> values;
+    if (!db.isOpen()) {
+        return values;
     }
-    QSqlQuery query(m_db);
-    if (!query.prepare(QStringLiteral(
-            "SELECT coverage_percent FROM operation_history WHERE field_id = ? "
-            "ORDER BY timestamp_ms DESC LIMIT ?"))) {
-        return coverage;
+    QSqlQuery query(db);
+    if (!query.prepare(QStringLiteral("SELECT %1 FROM operation_history WHERE field_id = ? "
+                                       "ORDER BY timestamp_ms DESC LIMIT ?")
+                            .arg(column))) {
+        return values;
     }
     query.addBindValue(fieldId);
     query.addBindValue(limit);
     if (!query.exec()) {
-        return coverage;
+        return values;
     }
     while (query.next()) {
-        coverage.push_back(query.value(0).toDouble());
+        values.push_back(query.value(0).toDouble());
     }
-    std::reverse(coverage.begin(), coverage.end());
-    return coverage;
+    std::reverse(values.begin(), values.end());
+    return values;
+}
+
+} // namespace
+
+std::vector<double> OperationHistoryStore::recentCoverage(const QString& fieldId, int limit) const
+{
+    return recentColumn(m_db, QStringLiteral("coverage_percent"), fieldId, limit);
+}
+
+std::vector<double> OperationHistoryStore::recentFuelLevels(const QString& fieldId, int limit) const
+{
+    return recentColumn(m_db, QStringLiteral("fuel_level_percent"), fieldId, limit);
+}
+
+std::vector<double> OperationHistoryStore::recentEngineLoads(const QString& fieldId, int limit) const
+{
+    return recentColumn(m_db, QStringLiteral("engine_load_percent"), fieldId, limit);
 }
 
 int OperationHistoryStore::sampleCount(const QString& fieldId) const

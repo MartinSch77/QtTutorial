@@ -7,6 +7,8 @@ add_library(satellite_telemetry_lib STATIC
     src/PowerSystem.cpp
     src/ThermalSimulator.h
     src/ThermalSimulator.cpp
+    src/GroundTrackSimulator.h
+    src/GroundTrackSimulator.cpp
     src/SubsystemMonitor.h
     src/SubsystemMonitor.cpp
     src/SubsystemHealthMachine.h
@@ -28,5 +30,9 @@ qttutorial_add_app(onboard_satellite_telemetry
         src/RadialGauge.cpp
         src/SubsystemHealthGrid.h
         src/SubsystemHealthGrid.cpp
+        src/IconPainter.h
+        src/IconPainter.cpp
+        src/StatusIconStrip.h
+        src/StatusIconStrip.cpp
     QT_LIBS Qt6::Widgets satellite_telemetry_lib
 )

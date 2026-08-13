@@ -21,6 +21,16 @@ double RouteProfile::permittedSpeedAt(double distanceM) const
     return m_segments.empty() ? 0.0 : m_segments.back().permittedSpeedKmh;
 }
 
+double RouteProfile::gradientPercentAt(double distanceM) const
+{
+    for (const SpeedSegment& segment : m_segments) {
+        if (distanceM >= segment.startDistanceM && distanceM < segment.endDistanceM) {
+            return segment.gradientPercent;
+        }
+    }
+    return m_segments.empty() ? 0.0 : m_segments.back().gradientPercent;
+}
+
 std::optional<Restriction> RouteProfile::nextRestriction(double distanceM) const
 {
     const double currentSpeed = permittedSpeedAt(distanceM);
@@ -30,6 +40,30 @@ std::optional<Restriction> RouteProfile::nextRestriction(double distanceM) const
         }
     }
     return std::nullopt;
+}
+
+std::vector<Restriction> RouteProfile::upcomingRestrictions(double distanceM, double lookaheadM,
+                                                              std::size_t maxCount) const
+{
+    std::vector<Restriction> restrictions;
+    double previousSpeed = permittedSpeedAt(distanceM);
+    for (const SpeedSegment& segment : m_segments) {
+        if (segment.startDistanceM <= distanceM) {
+            continue;
+        }
+        const double distanceToStartM = segment.startDistanceM - distanceM;
+        if (distanceToStartM > lookaheadM) {
+            break;
+        }
+        if (segment.permittedSpeedKmh < previousSpeed) {
+            restrictions.push_back(Restriction{distanceToStartM, segment.permittedSpeedKmh});
+            if (restrictions.size() >= maxCount) {
+                break;
+            }
+        }
+        previousSpeed = segment.permittedSpeedKmh;
+    }
+    return restrictions;
 }
 
 std::optional<Station> RouteProfile::nextStation(double distanceM) const

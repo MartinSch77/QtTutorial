@@ -18,4 +18,17 @@ void TractorTelemetry::tick()
     emit telemetryChanged();
 }
 
+QString TractorTelemetry::implementKind() const
+{
+    switch (m_state.implementKind) {
+    case ImplementKind::Plow:
+        return QStringLiteral("plow");
+    case ImplementKind::Sprayer:
+        return QStringLiteral("sprayer");
+    case ImplementKind::Planter:
+    default:
+        return QStringLiteral("planter");
+    }
+}
+
 } // namespace qttutorial::agriculture

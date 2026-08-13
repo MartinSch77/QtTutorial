@@ -15,3 +15,15 @@ qttutorial_add_test(test_fleet_simulator
     LIB central_command_lib
     QT_LIBS Qt6::Core
 )
+
+qttutorial_add_test(test_comms_link_quality_model
+    SOURCES test_comms_link_quality_model.cpp
+    LIB central_command_lib
+    QT_LIBS Qt6::Core
+)
+
+qttutorial_add_test(test_fleet_readiness
+    SOURCES test_fleet_readiness.cpp
+    LIB central_command_lib
+    QT_LIBS Qt6::Core
+)

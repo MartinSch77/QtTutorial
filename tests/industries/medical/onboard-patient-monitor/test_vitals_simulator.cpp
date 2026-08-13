@@ -41,6 +41,35 @@ private slots:
             QVERIFY(VitalsSimulator::diastolicAt(t) < VitalsSimulator::systolicAt(t));
         }
     }
+
+    void desaturationEventCorrelatesLowSpo2WithElevatedRespirationRate()
+    {
+        const double normalResp = VitalsSimulator::respirationRateAt(20.0);
+        const double episodeResp = VitalsSimulator::respirationRateAt(55.0);
+        QVERIFY(VitalsSimulator::spo2At(55.0) < VitalsSimulator::spo2At(20.0) - 5.0);
+        QVERIFY(episodeResp > normalResp + 5.0);
+    }
+
+    void feverEpisodeIsZeroOutsideItsWindow()
+    {
+        QCOMPARE(VitalsSimulator::feverSeverityAt(20.0), 0.0);
+        QCOMPARE(VitalsSimulator::feverSeverityAt(55.0), 0.0);
+    }
+
+    void feverEpisodeCorrelatesElevatedTemperatureWithElevatedHeartRateAndRespiration()
+    {
+        // t = 120 falls inside the fever window (100-140 within the 150s
+        // fever cycle) at full severity, and also happens to land on an
+        // integer multiple of the heart-rate and respiration wobble periods
+        // (12s and 20s respectively), so the baseline contribution at this
+        // exact instant is known: baseline heart rate is 72, baseline
+        // respiration rate is 16 - any excess above that is the fever
+        // contribution.
+        QCOMPARE(VitalsSimulator::feverSeverityAt(120.0), 1.0);
+        QVERIFY(VitalsSimulator::heartRateAt(120.0) > 80.0);
+        QVERIFY(VitalsSimulator::temperatureAt(120.0) > 38.0);
+        QVERIFY(VitalsSimulator::respirationRateAt(120.0) > 19.0);
+    }
 };
 
 QTEST_MAIN(TestVitalsSimulator)

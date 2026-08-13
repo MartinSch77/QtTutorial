@@ -1,6 +1,7 @@
 // SPDX-License-Identifier: MIT
 #pragma once
 
+#include "SceneRegistry.h"
 #include "ThermostatModel.h"
 
 #include <QObject>
@@ -30,6 +31,11 @@ public:
     void setTargetTemperature(double celsius);
     [[nodiscard]] Mode mode() const { return static_cast<Mode>(m_model.mode()); }
     void setMode(Mode mode);
+
+    // Moves the target/mode straight to the scene's setpoint; the current
+    // temperature still drifts there gradually via the regular tick(), so a
+    // scene change is felt over time rather than snapping instantly.
+    Q_INVOKABLE void applyScene(int sceneId);
 
 signals:
     void temperatureChanged();

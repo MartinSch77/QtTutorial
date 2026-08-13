@@ -3,8 +3,12 @@ find_package(Qt6 REQUIRED COMPONENTS Widgets Sql)
 add_library(mission_control_lib STATIC
     src/Satellite.h
     src/Satellite.cpp
+    src/GroundTrackMath.h
+    src/GroundTrackMath.cpp
     src/FleetOrbitSimulator.h
     src/FleetOrbitSimulator.cpp
+    src/GroundStationTracker.h
+    src/GroundStationTracker.cpp
     src/TelemetryHistoryStore.h
     src/TelemetryHistoryStore.cpp
 )
@@ -22,5 +26,11 @@ qttutorial_add_app(offboard_mission_control
         src/SatelliteTableModel.cpp
         src/BatteryTrendWidget.h
         src/BatteryTrendWidget.cpp
+        src/IconPainter.h
+        src/IconPainter.cpp
+        src/WorldMapWidget.h
+        src/WorldMapWidget.cpp
+        src/PassScheduleWidget.h
+        src/PassScheduleWidget.cpp
     QT_LIBS Qt6::Widgets Qt6::Sql mission_control_lib
 )

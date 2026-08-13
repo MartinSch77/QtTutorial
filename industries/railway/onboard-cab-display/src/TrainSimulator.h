@@ -5,6 +5,7 @@
 
 #include <QObject>
 #include <QTimer>
+#include <QVariantList>
 
 namespace qttutorial::cab_display {
 
@@ -25,12 +26,23 @@ class TrainSimulator : public QObject {
     Q_PROPERTY(QString nextStationName READ nextStationName NOTIFY updated)
     Q_PROPERTY(double nextStationDistanceM READ nextStationDistanceM NOTIFY updated)
     Q_PROPERTY(double positionM READ positionM NOTIFY updated)
+    Q_PROPERTY(bool brakeWarningActive READ brakeWarningActive NOTIFY updated)
+    Q_PROPERTY(QVariantList upcomingRestrictions READ upcomingRestrictions NOTIFY updated)
 
 public:
     static constexpr double kMaxAccelerationMs2 = 0.6;
     static constexpr double kServiceDecelerationMs2 = 0.8;
     static constexpr double kStationStopToleranceM = 15.0;
     static constexpr double kDwellSeconds = 8.0;
+    // How far above the permitted speed the driver must go before the
+    // brake-warning indication latches on, and how far back below it the
+    // speed must fall before it clears again — see `nextBrakeWarningState`.
+    static constexpr double kBrakeWarningOnMarginKmh = 3.0;
+    static constexpr double kBrakeWarningOffMarginKmh = 0.5;
+    // How far ahead of the train the DMI-style planning strip looks for
+    // upcoming speed restrictions, and how many it shows at once.
+    static constexpr double kPlanningLookaheadM = 2500.0;
+    static constexpr std::size_t kPlanningMaxRestrictions = 3;
 
     explicit TrainSimulator(RouteProfile route, QObject* parent = nullptr);
 
@@ -44,6 +56,11 @@ public:
     [[nodiscard]] int signalAspectIndex() const { return static_cast<int>(m_signalAspect); }
     [[nodiscard]] QString nextStationName() const { return m_nextStationName; }
     [[nodiscard]] double nextStationDistanceM() const { return m_nextStationDistanceM; }
+    [[nodiscard]] bool brakeWarningActive() const { return m_brakeWarningActive; }
+
+    // One entry per upcoming restriction, each a QVariantMap with
+    // "distanceM" and "speedKmh" keys, for QML's planning-strip Repeater.
+    [[nodiscard]] QVariantList upcomingRestrictions() const;
 
 public slots:
     // Pure(ish) simulation step: advances the train by dtSeconds. Only
@@ -62,6 +79,7 @@ private:
     double m_distanceToRestrictionM = 0.0;
     double m_restrictionSpeedKmh = 0.0;
     bool m_doorsOpen = false;
+    bool m_brakeWarningActive = false;
     double m_dwellRemainingSeconds = 0.0;
     SignalAspect m_signalAspect = SignalAspect::Green;
     QString m_nextStationName;

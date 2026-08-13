@@ -24,13 +24,66 @@ private slots:
         QCOMPARE(truck1.stateLabel, QStringLiteral("Hauling"));
     }
 
-    void payloadStaysWithinRatedBounds()
+    void payloadStaysWithinPlausibleBounds()
     {
+        // Payload may briefly exceed rated capacity during the loading
+        // overfill-then-trim window (mirroring the onboard console's
+        // HaulCycleSimulator), but never beyond the modelled peak overfill.
         for (int truck = 0; truck < 6; ++truck) {
             for (double t = 0.0; t < 600.0; t += 5.0) {
                 const TruckSample sample = HaulFleetSimulator::sampleAt(truck, t);
                 QVERIFY(sample.payloadTonnes >= 0.0);
-                QVERIFY(sample.payloadTonnes <= HaulFleetSimulator::kRatedCapacityTonnes);
+                QVERIFY(sample.payloadTonnes <= HaulFleetSimulator::kPeakLoadingOverfillTonnes);
+            }
+        }
+    }
+
+    void overloadIsFlaggedOnlyDuringTheLoadingOverfillWindow()
+    {
+        const TruckSample overfilled = HaulFleetSimulator::sampleAt(0, 22.0);
+        const TruckSample cruising = HaulFleetSimulator::sampleAt(0, 60.0);
+        QVERIFY(overfilled.overloaded);
+        QVERIFY(!cruising.overloaded);
+    }
+
+    void speedIsLowWhileLoadingAndCruisesWhileHauling()
+    {
+        QVERIFY(HaulFleetSimulator::speedKphAt(15.0) < HaulFleetSimulator::speedKphAt(60.0));
+        QCOMPARE(HaulFleetSimulator::speedKphAt(60.0), 45.0);
+    }
+
+    void fuelBurnIncreasesWithPayloadAtFixedSpeed()
+    {
+        const double emptyFuel = HaulFleetSimulator::fuelLtrPerHourAt(0.0, 45.0);
+        const double loadedFuel = HaulFleetSimulator::fuelLtrPerHourAt(HaulFleetSimulator::kRatedCapacityTonnes, 45.0);
+        QVERIFY(loadedFuel > emptyFuel);
+    }
+
+    void fuelBurnIncreasesWithSpeedAtFixedPayload()
+    {
+        const double slowFuel = HaulFleetSimulator::fuelLtrPerHourAt(100.0, 10.0);
+        const double fastFuel = HaulFleetSimulator::fuelLtrPerHourAt(100.0, 55.0);
+        QVERIFY(fastFuel > slowFuel);
+    }
+
+    void positionMovesFromShovelToDumpWhileHauling()
+    {
+        const TruckSample haulingStart = HaulFleetSimulator::sampleAt(0, 31.0);
+        const TruckSample haulingLate = HaulFleetSimulator::sampleAt(0, 115.0);
+        QCOMPARE(haulingStart.stateLabel, QStringLiteral("Hauling"));
+        QCOMPARE(haulingLate.stateLabel, QStringLiteral("Hauling"));
+        QVERIFY(haulingLate.positionY > haulingStart.positionY);
+    }
+
+    void positionStaysWithinNormalisedPitBounds()
+    {
+        for (int truck = 0; truck < 6; ++truck) {
+            for (double t = 0.0; t < 600.0; t += 5.0) {
+                const TruckSample sample = HaulFleetSimulator::sampleAt(truck, t);
+                QVERIFY(sample.positionX >= 0.0);
+                QVERIFY(sample.positionX <= 1.0);
+                QVERIFY(sample.positionY >= 0.0);
+                QVERIFY(sample.positionY <= 1.0);
             }
         }
     }

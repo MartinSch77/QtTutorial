@@ -1,6 +1,7 @@
 // SPDX-License-Identifier: MIT
 #pragma once
 
+#include "SceneRegistry.h"
 #include "SecurityCenter.h"
 
 #include <QAbstractListModel>
@@ -35,6 +36,10 @@ public:
     [[nodiscard]] bool armed() const { return m_center.armed(); }
     void setArmed(bool armed);
     [[nodiscard]] bool breach() const { return m_center.isBreach(); }
+
+    // Arms/disarms per the scene's policy (Away/Night arm, Home/Morning
+    // disarm) - the decision itself lives in SceneRegistry.
+    Q_INVOKABLE void applyScene(int sceneId);
 
 signals:
     void armedChanged();

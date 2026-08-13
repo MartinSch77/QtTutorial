@@ -24,6 +24,10 @@ class RiderTelemetry : public QObject {
     Q_PROPERTY(double rearTyrePressureBar READ rearTyrePressureBar NOTIFY telemetryChanged)
     Q_PROPERTY(double frontTyreTempC READ frontTyreTempC NOTIFY telemetryChanged)
     Q_PROPERTY(double rearTyreTempC READ rearTyreTempC NOTIFY telemetryChanged)
+    Q_PROPERTY(QString ridingModeLabel READ ridingModeLabel NOTIFY telemetryChanged)
+    Q_PROPERTY(int ridingModeIndex READ ridingModeIndex NOTIFY telemetryChanged)
+    Q_PROPERTY(double fuelLitres READ fuelLitres NOTIFY telemetryChanged)
+    Q_PROPERTY(double fuelPercent READ fuelPercent NOTIFY telemetryChanged)
 public:
     explicit RiderTelemetry(QObject* parent = nullptr);
 
@@ -35,6 +39,14 @@ public:
     [[nodiscard]] double rearTyrePressureBar() const { return m_state.rearTyrePressureBar; }
     [[nodiscard]] double frontTyreTempC() const { return m_state.frontTyreTempC; }
     [[nodiscard]] double rearTyreTempC() const { return m_state.rearTyreTempC; }
+    [[nodiscard]] QString ridingModeLabel() const;
+    [[nodiscard]] int ridingModeIndex() const { return static_cast<int>(m_state.mode); }
+    [[nodiscard]] double fuelLitres() const { return m_state.fuelLitres; }
+    [[nodiscard]] double fuelPercent() const;
+
+    // Called from RidingModeSelector.qml when the rider taps a mode button.
+    // modeIndex follows the RidingMode enum order: 0=Rain, 1=Road, 2=Sport, 3=Race.
+    Q_INVOKABLE void setRidingMode(int modeIndex);
 
 signals:
     void telemetryChanged();

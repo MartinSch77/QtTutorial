@@ -15,7 +15,20 @@ namespace qttutorial::automotive::fleet {
 class FleetModel : public QAbstractTableModel {
     Q_OBJECT
 public:
-    enum Column { IdColumn, LocationColumn, SpeedColumn, FuelColumn, FaultCodesColumn, ColumnCount };
+    enum Column {
+        IdColumn,
+        LocationColumn,
+        SpeedColumn,
+        FuelColumn,
+        EfficiencyColumn,
+        MaintenanceColumn,
+        FaultCodesColumn,
+        ColumnCount
+    };
+
+    // Role used by FleetMaintenanceIconDelegate to fetch the raw maintenance-due
+    // flag for the hand-painted wrench icon, independent of the display text.
+    static constexpr int MaintenanceDueRole = Qt::UserRole + 1;
 
     explicit FleetModel(int vehicleCount = 8, QObject* parent = nullptr);
 

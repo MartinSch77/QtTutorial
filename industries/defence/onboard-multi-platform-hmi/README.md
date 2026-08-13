@@ -32,6 +32,11 @@ has no weapons, targeting, or fire-control capability, by design.**
   informational overlay, not a weapon sight.
 - The **Vehicle Crew Display** panel is a status board (heading, speed,
   fuel/power, subsystem health) with no control inputs exposed anywhere.
+- The **Comms & Data Link** panel is a per-subsystem antenna/signal readout
+  plus a list of simulated off-board tracks received over a tactical data
+  link, each shown with its own freshness/staleness. It only ever reports
+  signal quality and data age — never anything about the tracked object
+  beyond position/heading/domain classification.
 
 Deliberately omitted: any weapons guidance/targeting algorithm, fire-control
 computation, munitions trajectory/aiming logic, or anything that could
@@ -97,6 +102,6 @@ cmake --build build --target onboard_multi_platform_hmi
 
 ## Tests
 
-`TrackMotionModel`, `VehicleStatusSimulator`, `SubsystemHealthMachine` and
-`DetectionSimulator` are unit-tested with QTest under
-`tests/industries/defence/onboard-multi-platform-hmi/`.
+`TrackMotionModel`, `VehicleStatusSimulator`, `SubsystemHealthMachine`,
+`DetectionSimulator` and `DataLinkTrackModel` are unit-tested with QTest
+under `tests/industries/defence/onboard-multi-platform-hmi/`.

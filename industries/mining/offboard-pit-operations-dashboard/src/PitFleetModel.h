@@ -16,7 +16,7 @@ namespace qttutorial::mining::pit {
 class PitFleetModel : public QAbstractTableModel {
     Q_OBJECT
 public:
-    enum Column { IdColumn, StateColumn, PayloadColumn, LocationColumn, ColumnCount };
+    enum Column { IdColumn, StateColumn, PayloadColumn, SpeedColumn, FuelColumn, LocationColumn, ColumnCount };
 
     explicit PitFleetModel(int truckCount = 6, QObject* parent = nullptr);
 
@@ -26,6 +26,7 @@ public:
     QVariant headerData(int section, Qt::Orientation orientation, int role) const override;
 
     [[nodiscard]] TruckSample sampleAt(int row) const;
+    [[nodiscard]] const std::vector<TruckSample>& samples() const { return m_samples; }
 
 signals:
     void samplesUpdated();

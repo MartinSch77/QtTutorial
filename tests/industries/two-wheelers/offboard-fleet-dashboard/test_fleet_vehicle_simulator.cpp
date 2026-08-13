@@ -84,6 +84,46 @@ private slots:
         QCOMPARE(riderStatusLabel(RiderStatus::Charging), QStringLiteral("charging"));
         QCOMPARE(riderStatusLabel(RiderStatus::Maintenance), QStringLiteral("maintenance"));
     }
+
+    void odometerIncreasesMonotonicallyWithTime()
+    {
+        double lastOdometer = -1.0;
+        for (double t = 0.0; t < 5000.0; t += 250.0) {
+            const double odometer = FleetVehicleSimulator::odometerKmAt(0, t);
+            QVERIFY(odometer >= lastOdometer);
+            lastOdometer = odometer;
+        }
+        QVERIFY(lastOdometer > 0.0);
+    }
+
+    void odometerDiffersAcrossVehicles()
+    {
+        const double odometerA = FleetVehicleSimulator::odometerKmAt(0, 3600.0);
+        const double odometerB = FleetVehicleSimulator::odometerKmAt(1, 3600.0);
+        QVERIFY(odometerA != odometerB);
+    }
+
+    void maintenanceDueTogglesPeriodicallyWithMileage()
+    {
+        bool sawDue = false;
+        bool sawNotDue = false;
+        for (double t = 0.0; t < 2000000.0; t += 5000.0) {
+            if (FleetVehicleSimulator::maintenanceDueAt(2, t)) {
+                sawDue = true;
+            } else {
+                sawNotDue = true;
+            }
+        }
+        QVERIFY(sawDue);
+        QVERIFY(sawNotDue);
+    }
+
+    void sampleAtIncludesOdometerAndMaintenanceDue()
+    {
+        const VehicleSample sample = FleetVehicleSimulator::sampleAt(0, 1800.0);
+        QCOMPARE(sample.odometerKm, FleetVehicleSimulator::odometerKmAt(0, 1800.0));
+        QCOMPARE(sample.maintenanceDue, FleetVehicleSimulator::maintenanceDueAt(0, 1800.0));
+    }
 };
 
 QTEST_MAIN(TestFleetVehicleSimulator)

@@ -56,6 +56,49 @@ private slots:
         QVERIFY(sim.tankLevel() >= ProcessSimulator::kHighLevelAlarm);
     }
 
+    void closingValveStopsDownstreamOutflowSoLevelStopsFalling()
+    {
+        ProcessSimulator sim;
+        sim.setPumpRunning(false);
+        sim.setValveOpen(false);
+        for (int i = 0; i < 50; ++i) {
+            sim.tick(0.1);
+        }
+        // With the pump off and the valve closed, nothing is draining out of
+        // the tank downstream, so the level should hold rather than fall
+        // toward the outflow baseline the way it does with the valve open.
+        QCOMPARE(sim.tankLevel(), 45.0);
+    }
+
+    void motorOnlyRunsWhenPumpFeedsFlowAndValveIsOpen()
+    {
+        ProcessSimulator sim;
+        sim.setPumpRunning(true);
+        sim.setValveOpen(true);
+        for (int i = 0; i < 50; ++i) {
+            sim.tick(0.1);
+        }
+        QVERIFY(sim.isMotorRunning());
+        QVERIFY(sim.conveyorSpeed() > 0.0);
+
+        sim.setValveOpen(false);
+        for (int i = 0; i < 50; ++i) {
+            sim.tick(0.1);
+        }
+        QVERIFY(!sim.isMotorRunning());
+        QVERIFY(sim.conveyorSpeed() < 0.05);
+    }
+
+    void conveyorSpeedRampsRatherThanJumping()
+    {
+        ProcessSimulator sim;
+        sim.setPumpRunning(true);
+        sim.setValveOpen(true);
+        sim.tick(0.1);
+        QVERIFY(sim.conveyorSpeed() > 0.0);
+        QVERIFY(sim.conveyorSpeed() < ProcessSimulator::kMaxConveyorSpeed);
+    }
+
     void pumpStartsAndStopsThroughStateMachine()
     {
         PumpController pump;
@@ -116,6 +159,22 @@ private slots:
         QCOMPARE(log.latestMessage(), QStringLiteral("second"));
         QCOMPARE(log.latestSeverity(), static_cast<int>(AlarmLogModel::Severity::Critical));
         QCOMPARE(log.data(log.index(1, 0), AlarmLogModel::MessageRole).toString(), QStringLiteral("first"));
+    }
+
+    void acknowledgingAnAlarmClearsItsFlagAndUpdatesTheOutstandingCount()
+    {
+        AlarmLogModel log;
+        log.raise(QStringLiteral("first"), AlarmLogModel::Severity::Warning);
+        log.raise(QStringLiteral("second"), AlarmLogModel::Severity::Critical);
+        QCOMPARE(log.unacknowledgedCount(), 2);
+
+        log.acknowledge(0);
+        QCOMPARE(log.unacknowledgedCount(), 1);
+        QVERIFY(log.data(log.index(0, 0), AlarmLogModel::AcknowledgedRole).toBool());
+        QVERIFY(!log.data(log.index(1, 0), AlarmLogModel::AcknowledgedRole).toBool());
+
+        log.acknowledgeAll();
+        QCOMPARE(log.unacknowledgedCount(), 0);
     }
 };
 

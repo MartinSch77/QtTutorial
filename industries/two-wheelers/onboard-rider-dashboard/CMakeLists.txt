@@ -21,4 +21,10 @@ qttutorial_add_app(two_wheelers_onboard_rider_dashboard
         src/qml/Gauge.qml
         src/qml/LeanIndicator.qml
         src/qml/TyrePanel.qml
+        src/qml/MotorcycleIcon.qml
+        src/qml/HelmetIcon.qml
+        src/qml/FuelGaugeIcon.qml
+        src/qml/GearBadge.qml
+        src/qml/FuelPanel.qml
+        src/qml/RidingModeSelector.qml
 )

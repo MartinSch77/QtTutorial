@@ -35,4 +35,9 @@ void HmiApp::togglePump()
     }
 }
 
+void HmiApp::toggleValve()
+{
+    m_process.setValveOpen(!m_process.isValveOpen());
+}
+
 } // namespace qttutorial::industrial_hmi

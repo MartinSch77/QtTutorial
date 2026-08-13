@@ -13,6 +13,9 @@ class QListWidget;
 
 namespace qttutorial::medical::telehealth {
 
+class PatientOverviewWidget;
+class TrendChartWidget;
+
 class MainWindow : public QMainWindow {
     Q_OBJECT
 public:
@@ -21,10 +24,13 @@ public:
 private:
     void onSamplesUpdated();
     void refreshAlerts();
+    void onPatientSelected(const QString& patientId, const QString& name);
 
     PatientListModel* m_model;
+    PatientOverviewWidget* m_overview;
     QListView* m_patientList;
     QListWidget* m_alertList;
+    TrendChartWidget* m_trendChart;
     std::unique_ptr<VitalsHistoryStore> m_historyStore;
 };
 

@@ -18,13 +18,11 @@ Rectangle {
         anchors.margins: 10
         spacing: 8
 
-        Rectangle {
-            width: 10
-            height: 10
-            radius: 5
+        DoorSensorIcon {
+            width: 18
+            height: 18
             anchors.verticalCenter: parent.verticalCenter
-            color: root.triggered ? "#d4a12b" : "#3ddc6f"
-            Behavior on color { ColorAnimation { duration: 200 } }
+            triggered: root.triggered
         }
         Text {
             anchors.verticalCenter: parent.verticalCenter

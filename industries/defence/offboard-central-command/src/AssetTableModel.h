@@ -12,7 +12,7 @@ namespace qttutorial::defence {
 class AssetTableModel : public QAbstractTableModel {
     Q_OBJECT
 public:
-    enum Column { IdColumn, TypeColumn, HealthColumn, PositionColumn, ColumnCount };
+    enum Column { IdColumn, TypeColumn, HealthColumn, LinkColumn, PositionColumn, ColumnCount };
 
     explicit AssetTableModel(QObject* parent = nullptr);
 
@@ -25,6 +25,9 @@ public:
     [[nodiscard]] const Asset* assetAt(int row) const;
 
 private:
+    [[nodiscard]] static QVariant backgroundFor(const Asset& asset, int column);
+    [[nodiscard]] static QVariant displayValueFor(const Asset& asset, int column);
+
     std::vector<Asset> m_assets;
 };
 

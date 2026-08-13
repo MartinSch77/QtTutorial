@@ -1,7 +1,9 @@
 // SPDX-License-Identifier: MIT
 #include "MainWindow.h"
 
+#include "PatientOverviewWidget.h"
 #include "SparklineDelegate.h"
+#include "TrendChartWidget.h"
 
 #include <QColor>
 #include <QDateTime>
@@ -23,8 +25,10 @@ constexpr int kPrimaryPatientRow = 0;
 MainWindow::MainWindow(QWidget* parent)
     : QMainWindow(parent)
     , m_model(new PatientListModel(5, this))
+    , m_overview(new PatientOverviewWidget(m_model, this))
     , m_patientList(new QListView(this))
     , m_alertList(new QListWidget(this))
+    , m_trendChart(new TrendChartWidget(this))
     , m_historyStore(std::make_unique<VitalsHistoryStore>(QStringLiteral(":memory:"),
                                                            QStringLiteral("telehealth_dashboard_history")))
 {
@@ -34,34 +38,60 @@ MainWindow::MainWindow(QWidget* parent)
     m_patientList->setItemDelegate(new SparklineDelegate(this));
     m_patientList->setUniformItemSizes(false);
 
-    auto* splitter = new QSplitter(Qt::Vertical, this);
+    auto* outerSplitter = new QSplitter(Qt::Vertical, this);
+
+    auto* overviewContainer = new QWidget(this);
+    auto* overviewLayout = new QVBoxLayout(overviewContainer);
+    overviewLayout->addWidget(new QLabel(tr("Patient overview (click a card to trend it below)"), this));
+    overviewLayout->addWidget(m_overview);
+    outerSplitter->addWidget(overviewContainer);
+
+    auto* middleSplitter = new QSplitter(Qt::Horizontal, this);
     auto* patientContainer = new QWidget(this);
     auto* patientLayout = new QVBoxLayout(patientContainer);
     patientLayout->addWidget(new QLabel(tr("Patients"), this));
     patientLayout->addWidget(m_patientList);
-    splitter->addWidget(patientContainer);
+    middleSplitter->addWidget(patientContainer);
 
     auto* alertContainer = new QWidget(this);
     auto* alertLayout = new QVBoxLayout(alertContainer);
     alertLayout->addWidget(new QLabel(tr("Alerts (most severe first)"), this));
     alertLayout->addWidget(m_alertList);
-    splitter->addWidget(alertContainer);
+    middleSplitter->addWidget(alertContainer);
+    outerSplitter->addWidget(middleSplitter);
 
-    setCentralWidget(splitter);
-    resize(720, 640);
+    outerSplitter->addWidget(m_trendChart);
+
+    setCentralWidget(outerSplitter);
+    resize(880, 900);
 
     connect(m_model, &PatientListModel::samplesUpdated, this, &MainWindow::onSamplesUpdated);
+    connect(m_overview, &PatientOverviewWidget::patientSelected, this, &MainWindow::onPatientSelected);
+
+    m_trendChart->setHistoryStore(m_historyStore.get());
+    const PatientVitals primary = m_model->vitalsAt(kPrimaryPatientRow);
+    onPatientSelected(primary.id, primary.name);
+
     refreshAlerts();
 }
 
 void MainWindow::onSamplesUpdated()
 {
     if (m_historyStore->isOpen()) {
-        const PatientVitals primary = m_model->vitalsAt(kPrimaryPatientRow);
-        m_historyStore->recordSample(primary.id, QDateTime::currentMSecsSinceEpoch(), primary.heartRate,
-                                      primary.spo2, primary.systolic, primary.diastolic);
+        const qint64 now = QDateTime::currentMSecsSinceEpoch();
+        for (int row = 0; row < m_model->rowCount(); ++row) {
+            const PatientVitals vitals = m_model->vitalsAt(row);
+            m_historyStore->recordSample(vitals.id, now, vitals.heartRate, vitals.spo2, vitals.systolic,
+                                          vitals.diastolic);
+        }
     }
+    m_trendChart->refresh();
     refreshAlerts();
+}
+
+void MainWindow::onPatientSelected(const QString& patientId, const QString& name)
+{
+    m_trendChart->setSelectedPatient(patientId, name);
 }
 
 void MainWindow::refreshAlerts()

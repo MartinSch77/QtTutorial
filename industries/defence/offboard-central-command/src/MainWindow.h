@@ -5,6 +5,7 @@
 #include "AssetHistoryStore.h"
 #include "FleetSimulator.h"
 
+#include <QComboBox>
 #include <QListWidget>
 #include <QTableView>
 #include <QTimer>
@@ -16,6 +17,7 @@ namespace qttutorial::defence {
 
 class AssetTableModel;
 class TacticalMapWidget;
+class FleetReadinessBoard;
 
 class MainWindow : public QWidget {
     Q_OBJECT
@@ -26,6 +28,7 @@ private:
     void onTick();
     void onAlertRaised(const Alert& alert);
     void refreshAlertList();
+    [[nodiscard]] AlertSeverity selectedMinimumSeverity() const;
 
     FleetSimulator m_simulator;
     AlertLog m_alertLog;
@@ -34,6 +37,8 @@ private:
     AssetTableModel* m_assetModel;
     QTableView* m_assetView;
     TacticalMapWidget* m_mapWidget;
+    FleetReadinessBoard* m_readinessBoard;
+    QComboBox* m_severityFilter;
     QListWidget* m_alertList;
     QTimer* m_timer;
 };

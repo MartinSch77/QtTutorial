@@ -24,6 +24,7 @@ private:
     std::vector<SatelliteState> m_satellites;
     std::vector<double> m_orbitalPeriodMinutes;
     std::vector<double> m_eclipseFraction;
+    double m_earthRotationDeg = 0.0; // accumulated Earth rotation, shared by the whole fleet
 };
 
 } // namespace qttutorial::space

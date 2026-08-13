@@ -47,4 +47,31 @@ Column {
             }
         }
     }
+
+    Text {
+        text: qsTr("Cameras")
+        color: "#9aa4b2"
+        font.pixelSize: 14
+        font.bold: true
+    }
+
+    Grid {
+        width: parent.width
+        columns: 2
+        columnSpacing: 16
+        rowSpacing: 16
+
+        CameraTile {
+            width: (root.width - 16) / 2
+            height: 130
+            cameraName: qsTr("Front Door")
+            live: root.securityModel.armed
+        }
+        CameraTile {
+            width: (root.width - 16) / 2
+            height: 130
+            cameraName: qsTr("Driveway")
+            live: root.securityModel.armed
+        }
+    }
 }

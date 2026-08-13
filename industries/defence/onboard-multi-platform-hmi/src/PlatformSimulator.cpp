@@ -3,6 +3,7 @@
 
 #include <QVariantMap>
 
+#include <algorithm>
 #include <cmath>
 
 namespace qttutorial::defence {
@@ -30,6 +31,7 @@ PlatformSimulator::PlatformSimulator(QObject* parent)
         QVariantMap entry;
         entry[QStringLiteral("name")] = QString::fromLatin1(band.name);
         entry[QStringLiteral("state")] = QStringLiteral("Nominal");
+        entry[QStringLiteral("value")] = band.nominalHigh;
         m_subsystems.push_back(entry);
         machine->start();
         m_subsystemMachines.push_back(std::move(machine));
@@ -51,13 +53,31 @@ void PlatformSimulator::tick()
 
     const double propulsionValue = 70.0 + 25.0 * std::sin(m_elapsedSeconds * 0.05);
     const double powerValue = 80.0 - 15.0 * std::max(0.0, std::sin(m_elapsedSeconds * 0.03));
-    const double commsValue = 90.0 + 8.0 * std::sin(m_elapsedSeconds * 0.11);
+    // The Comms subsystem occasionally dips hard (rather than gently
+    // oscillating like the others) so the correlated tactical-data-link
+    // staleness effect below has something visible to demonstrate.
+    const double commsValue =
+        60.0 + 35.0 * std::sin(m_elapsedSeconds * 0.11) - 25.0 * std::max(0.0, std::sin(m_elapsedSeconds * 0.02));
     const double sensorsValue = 85.0 + 10.0 * std::sin(m_elapsedSeconds * 0.07);
 
     m_subsystemMachines[0]->updateValue(propulsionValue);
     m_subsystemMachines[1]->updateValue(powerValue);
     m_subsystemMachines[2]->updateValue(commsValue);
     m_subsystemMachines[3]->updateValue(sensorsValue);
+
+    const double values[] = {propulsionValue, powerValue, commsValue, sensorsValue};
+    for (int i = 0; i < static_cast<int>(m_subsystems.size()) && i < 4; ++i) {
+        QVariantMap map = m_subsystems[i].toMap();
+        map[QStringLiteral("value")] = std::clamp(values[i], 0.0, 100.0);
+        m_subsystems[i] = map;
+    }
+
+    // Comms link quality (clamped to a displayable 0-100 percentage) drives
+    // both the Comms health-grid cell above and the tactical data-link
+    // track staleness below - the same simulated cause, two correlated,
+    // purely informational effects.
+    m_commsQualityPercent = std::clamp(commsValue, 0.0, 100.0);
+    m_dataLinkModel.advance(dtSeconds, m_commsQualityPercent);
 
     emit dataChanged();
 }
@@ -81,6 +101,7 @@ QVariantList PlatformSimulator::tracks() const
         QVariantMap map;
         map[QStringLiteral("id")] = track.id;
         map[QStringLiteral("classification")] = track.classification;
+        map[QStringLiteral("domain")] = track.domain;
         map[QStringLiteral("xKm")] = track.xKm;
         map[QStringLiteral("yKm")] = track.yKm;
         map[QStringLiteral("headingDeg")] = track.headingDeg;
@@ -128,6 +149,25 @@ QVariantList PlatformSimulator::teammates() const
         map[QStringLiteral("id")] = teammate.id;
         map[QStringLiteral("bearingDeg")] = teammate.bearingDeg;
         map[QStringLiteral("distanceKm")] = teammate.distanceKm;
+        list.push_back(map);
+    }
+    return list;
+}
+
+QVariantList PlatformSimulator::dataLinkTracks() const
+{
+    QVariantList list;
+    for (const DataLinkTrack& track : m_dataLinkModel.tracks()) {
+        QVariantMap map;
+        map[QStringLiteral("id")] = track.id;
+        map[QStringLiteral("classification")] = track.classification;
+        map[QStringLiteral("domain")] = track.domain;
+        map[QStringLiteral("xKm")] = track.xKm;
+        map[QStringLiteral("yKm")] = track.yKm;
+        map[QStringLiteral("headingDeg")] = track.headingDeg;
+        map[QStringLiteral("speedKmh")] = track.speedKmh;
+        map[QStringLiteral("stale")] = track.stale;
+        map[QStringLiteral("dataAgeSeconds")] = track.dataAgeSeconds;
         list.push_back(map);
     }
     return list;
