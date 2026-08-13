@@ -32,6 +32,9 @@ on:
 env:
   QT_VERSION: "6.11.1"
   QT_MODULES: "qt5compat qtscxml qtserialport qtshadertools qtgraphs"
+  # Runners have no display server; GUI-linked QTest binaries need this to
+  # instantiate QApplication/QGuiApplication without a real windowing system.
+  QT_QPA_PLATFORM: "offscreen"
 
 jobs:
   build-and-test:

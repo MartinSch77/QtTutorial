@@ -4,11 +4,13 @@
 Walks the repo tree looking for:
   - framework-tour/<name>/            (every immediate subdirectory)
   - industries/<industry>/{onboard,offboard}-<name>/
+  - games/<name>/                     (every immediate subdirectory, incl. "common")
 
 For each one found, checks whether a matching test directory containing a
 CMakeLists.txt exists:
   - tests/framework-tour/<name>/CMakeLists.txt
   - tests/industries/<industry>/<name>/CMakeLists.txt
+  - tests/games/<name>/CMakeLists.txt
 
 Writes a markdown traceability table to docs/qa/traceability.md mapping each
 module/example to whether it has a test directory, and which REQ-* IDs from
@@ -36,13 +38,15 @@ from pathlib import Path
 REPO_ROOT = Path(__file__).resolve().parent.parent
 FRAMEWORK_TOUR_DIR = REPO_ROOT / "framework-tour"
 INDUSTRIES_DIR = REPO_ROOT / "industries"
+GAMES_DIR = REPO_ROOT / "games"
 TESTS_DIR = REPO_ROOT / "tests"
 OUTPUT_PATH = REPO_ROOT / "docs" / "qa" / "traceability.md"
 
 # Non-module files/dirs that can legitimately sit alongside real modules at
-# the framework-tour/ and industries/<industry>/ top levels.
+# the framework-tour/, industries/<industry>/, and games/ top levels.
 FRAMEWORK_TOUR_IGNORE = {"CMakeLists.txt"}
 INDUSTRY_IGNORE = {"CMakeLists.txt"}
+GAMES_IGNORE = {"CMakeLists.txt"}
 
 
 @dataclass
@@ -110,6 +114,27 @@ def find_industry_entries() -> list[Entry]:
     return entries
 
 
+def find_games_entries() -> list[Entry]:
+    entries: list[Entry] = []
+    if not GAMES_DIR.is_dir():
+        return entries
+    for child in sorted(GAMES_DIR.iterdir()):
+        if not child.is_dir():
+            continue
+        if child.name in GAMES_IGNORE:
+            continue
+        name = child.name
+        entries.append(
+            Entry(
+                category="games",
+                display_name=f"games/{name}",
+                test_dir=TESTS_DIR / "games" / name,
+                req_ids=["REQ-GAME-02", "REQ-GAME-03"],
+            )
+        )
+    return entries
+
+
 def render_report(entries: list[Entry]) -> str:
     lines = [
         "# Requirements Traceability Report",
@@ -146,7 +171,7 @@ def render_report(entries: list[Entry]) -> str:
 
 
 def main() -> int:
-    entries = find_framework_tour_entries() + find_industry_entries()
+    entries = find_framework_tour_entries() + find_industry_entries() + find_games_entries()
 
     report = render_report(entries)
     OUTPUT_PATH.parent.mkdir(parents=True, exist_ok=True)
