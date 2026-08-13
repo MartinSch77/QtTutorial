@@ -45,6 +45,20 @@ target_link_libraries(factory_control_center_lib PUBLIC Qt6::Core Qt6::Gui Qt6::
 target_compile_features(factory_control_center_lib PUBLIC cxx_std_23)
 qttutorial_set_warnings(factory_control_center_lib)
 
+# SurfaceGridBridge includes <QtGraphs/qsurfacedataproxy.h> directly, so it
+# can only be compiled when Qt6::Graphs is actually present (see README.md:
+# QSurfaceDataProxy::resetArray()/setRow()/setRows() are plain C++ methods,
+# not Q_INVOKABLE, so populating a Surface3D chart's data from QML alone -
+# what GraphsCharts.qml originally attempted - fails at runtime; this bridge
+# is the real fix, not a guarded fallback).
+if(TARGET Qt6::Graphs)
+    target_sources(factory_control_center_lib PRIVATE
+        src/SurfaceGridBridge.h
+        src/SurfaceGridBridge.cpp
+    )
+    target_link_libraries(factory_control_center_lib PUBLIC Qt6::Graphs)
+endif()
+
 # Real spatial audio (QAudioEngine/QAudioListener/QSpatialSound - all
 # verified real via qt_documentation_read, see AlarmAudioController.h) only
 # when both modules are present; otherwise AlarmAudioController falls back

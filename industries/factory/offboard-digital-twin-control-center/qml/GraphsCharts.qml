@@ -27,6 +27,15 @@ import QtTutorial.Factory.OffboardDigitalTwinControlCenter
 // children), so a nested Connections there fails to load with "Cannot
 // assign object ... to list property" - confirmed by actually building and
 // running this file against a complete local Qt install that has Qt Graphs.
+//
+// Surface3DSeries itself has no writable "dataArray" QML property (only a
+// "dataProxy" pointer) - QSurfaceDataProxy::resetArray()/setRow()/setRows()
+// are plain C++ methods, not Q_INVOKABLE, confirmed by reading
+// qsurfacedataproxy.h directly. surfaceGridBridge (a small C++ helper, see
+// SurfaceGridBridge.h, exposed as a context property from main.cpp only
+// when Qt6::Graphs is present) is the real fix for this: its "proxy" is
+// bound to the series below, and its setGrid() invokable does the
+// row/column -> QSurfaceDataItem conversion in C++ instead.
 Item {
     id: root
 
@@ -77,6 +86,7 @@ Item {
                 id: surfaceSeries
                 shading: Surface3DSeries.Shading.Smooth
                 drawMode: Surface3DSeries.DrawFlag.DrawSurface
+                dataProxy: surfaceGridBridge.proxy
             }
         }
     }
@@ -94,14 +104,7 @@ Item {
                 temperatureSeries.append(i, root.temperatureHistory[i]);
         }
         function onSurfaceGridChanged() {
-            const rows = [];
-            for (let r = 0; r < root.surfaceGrid.length; ++r) {
-                const row = [];
-                for (let c = 0; c < root.surfaceGrid[r].length; ++c)
-                    row.push(Qt.vector3d(c, root.surfaceGrid[r][c], r));
-                rows.push(row);
-            }
-            surfaceSeries.dataArray = rows;
+            surfaceGridBridge.setGrid(root.surfaceGrid);
         }
     }
 }

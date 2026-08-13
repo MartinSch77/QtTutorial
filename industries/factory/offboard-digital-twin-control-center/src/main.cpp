@@ -4,6 +4,9 @@
 #include "MachineListModel.h"
 #include "MachineTelemetrySimulator.h"
 #include "MaintenanceWorkflow.h"
+#ifdef OFFBOARD_DIGITAL_TWIN_HAVE_GRAPHS
+#include "SurfaceGridBridge.h"
+#endif
 
 #include <QGuiApplication>
 #include <QQmlApplicationEngine>
@@ -35,6 +38,8 @@ int main(int argc, char *argv[])
     engine.rootContext()->setContextProperty(QStringLiteral("maintenanceWorkflow"), maintenanceWorkflow);
 #ifdef OFFBOARD_DIGITAL_TWIN_HAVE_GRAPHS
     engine.rootContext()->setContextProperty(QStringLiteral("graphsAvailable"), true);
+    auto *surfaceGridBridge = new SurfaceGridBridge(&app);
+    engine.rootContext()->setContextProperty(QStringLiteral("surfaceGridBridge"), surfaceGridBridge);
 #else
     engine.rootContext()->setContextProperty(QStringLiteral("graphsAvailable"), false);
 #endif

@@ -72,10 +72,15 @@ ApplicationWindow {
                         Repeater {
                             model: feedModel
                             delegate: HeadlineChip {
+                                // No explicit role bindings needed: HeadlineChip's
+                                // required properties are named "text"/"category"/
+                                // "breaking" to match NewsFeedModel's roles exactly,
+                                // and Qt Quick auto-binds same-named required
+                                // properties to model role values. See
+                                // HeadlineChip.qml for why the previous explicit
+                                // `headlineText: text` style binding here failed at
+                                // runtime under AOT-compiled QML.
                                 anchors.verticalCenter: parent.verticalCenter
-                                headlineText: text
-                                headlineCategory: category
-                                breaking: model.breaking
                             }
                         }
                     }
@@ -87,10 +92,15 @@ ApplicationWindow {
                         Repeater {
                             model: feedModel
                             delegate: HeadlineChip {
+                                // No explicit role bindings needed: HeadlineChip's
+                                // required properties are named "text"/"category"/
+                                // "breaking" to match NewsFeedModel's roles exactly,
+                                // and Qt Quick auto-binds same-named required
+                                // properties to model role values. See
+                                // HeadlineChip.qml for why the previous explicit
+                                // `headlineText: text` style binding here failed at
+                                // runtime under AOT-compiled QML.
                                 anchors.verticalCenter: parent.verticalCenter
-                                headlineText: text
-                                headlineCategory: category
-                                breaking: model.breaking
                             }
                         }
                     }

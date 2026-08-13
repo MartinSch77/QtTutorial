@@ -6,8 +6,20 @@ import QtQuick
 // scrolling past at speed.
 Row {
     id: root
-    required property string headlineText
-    required property string headlineCategory
+    // Named to match NewsFeedModel's role names exactly ("text"/"category"/
+    // "breaking", see NewsFeedModel::roleNames()) rather than
+    // "headlineText"/"headlineCategory": Qt Quick automatically binds a
+    // model role's value to a delegate's required property of the same
+    // name with no explicit binding needed - and that automatic binding is
+    // the only role-data path that works with AOT-compiled QML
+    // (qmlcachegen). An explicit `headlineText: text` binding in the
+    // Repeater delegate, as this file previously required, referenced
+    // Repeater's dynamically-injected bare role-name context properties,
+    // which the AOT compiler cannot resolve statically - confirmed by
+    // actually running this app, which failed at runtime with "text is not
+    // defined" / "model is not defined" ReferenceErrors.
+    required property string text
+    required property string category
     required property bool breaking
 
     spacing: 10
@@ -40,7 +52,7 @@ Row {
 
     Text {
         anchors.verticalCenter: parent.verticalCenter
-        text: "[" + root.headlineCategory + "] " + root.headlineText
+        text: "[" + root.category + "] " + root.text
         color: root.breaking ? "#ff8a80" : "white"
         font.pixelSize: 16
         font.bold: root.breaking

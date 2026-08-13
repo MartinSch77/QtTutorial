@@ -20,8 +20,14 @@ Item {
         }
 
         Text {
-            visible: root.controller.connectionError.length > 0
-            text: root.controller.connectionError
+            // Guarded against root.controller being momentarily undefined:
+            // the Loader that instantiates this Component synchronously
+            // creates the object tree (evaluating these bindings once)
+            // before the "controller: controller" assignment lands,
+            // producing a real (if self-healing) "Cannot read property of
+            // undefined" console warning without this guard.
+            visible: root.controller ? root.controller.connectionError.length > 0 : false
+            text: root.controller ? root.controller.connectionError : ""
             color: "#e0524a"
             wrapMode: Text.WordWrap
             width: parent.width
@@ -62,7 +68,7 @@ Item {
             width: parent.width
             height: 120
             clip: true
-            model: root.controller.discoveredGames
+            model: root.controller ? root.controller.discoveredGames : []
             delegate: Rectangle {
                 width: ListView.view.width
                 height: 44
