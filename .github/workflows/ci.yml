@@ -59,7 +59,23 @@ jobs:
     strategy:
       fail-fast: false
       matrix:
-        os: [ubuntu-latest, windows-latest, macos-latest]
+        include:
+          - os: ubuntu-latest
+            qt_arch: ""
+          # Windows 6.11.1 has no combined per-version Updates.xml on Qt's
+          # official mirror (confirmed directly: download.qt.io/online/
+          # qtsdkrepository/windows_x86/desktop/qt6_6111/qt6_6111/
+          # Updates.xml 404s), only per-architecture ones
+          # (.../qt6_6111/qt6_6111_msvc2022_64/Updates.xml, confirmed 200)
+          # - without an explicit arch, install-qt-action/aqtinstall tries
+          # the combined listing first and fails before ever reaching the
+          # real per-arch data. This was a genuine, 100%-reproducible CI
+          # failure on every run in this project's history, not a flaky
+          # mirror issue.
+          - os: windows-latest
+            qt_arch: "win64_msvc2022_64"
+          - os: macos-latest
+            qt_arch: ""
 
     steps:
       - name: Checkout
@@ -70,6 +86,7 @@ jobs:
         with:
           version: ${{ env.QT_VERSION }}
           modules: ${{ env.QT_MODULES }}
+          arch: ${{ matrix.qt_arch }}
           cache: true
 
       - name: Configure
