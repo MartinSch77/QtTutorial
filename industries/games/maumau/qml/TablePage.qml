@@ -23,20 +23,28 @@ Item {
         const clone = flyingCardComponent.createObject(root, {
             x: startPos.x, y: startPos.y, rank: rank, suit: suit, faceUp: faceUp
         });
+        // QQuickAnimationGroup (ParallelAnimation's base type) has no
+        // "addAnimation()" invokable method - its "animations" property is
+        // read-only, populated only by static QML nesting, not by any
+        // programmatic append call (confirmed by reading QtQuick's own
+        // plugins.qmltypes: QQuickAnimationGroup declares "animations" as
+        // isReadonly with zero Method entries) - the previous
+        // moveX/moveY/addAnimation() approach could never have worked,
+        // confirmed by actually running this app and clicking a card.
+        // Declaring both NumberAnimations as part of the same
+        // createQmlObject() call nests them into "animations" correctly;
+        // target/to are then set on the already-created list items, which
+        // is a plain property write, not a list mutation.
         const anim = Qt.createQmlObject(
-            "import QtQuick; ParallelAnimation { running: true }", clone);
-        const moveX = Qt.createQmlObject(
-            "import QtQuick; NumberAnimation { duration: 380; easing.type: Easing.InOutQuad }", anim);
-        moveX.target = clone;
-        moveX.property = "x";
-        moveX.to = toX;
-        const moveY = Qt.createQmlObject(
-            "import QtQuick; NumberAnimation { duration: 380; easing.type: Easing.InOutQuad }", anim);
-        moveY.target = clone;
-        moveY.property = "y";
-        moveY.to = toY;
-        anim.addAnimation(moveX);
-        anim.addAnimation(moveY);
+            "import QtQuick; ParallelAnimation {" +
+            "running: false;" +
+            "NumberAnimation { property: 'x'; duration: 380; easing.type: Easing.InOutQuad }" +
+            "NumberAnimation { property: 'y'; duration: 380; easing.type: Easing.InOutQuad }" +
+            "}", clone);
+        anim.animations[0].target = clone;
+        anim.animations[0].to = toX;
+        anim.animations[1].target = clone;
+        anim.animations[1].to = toY;
         anim.finished.connect(function () { clone.destroy(); });
         anim.restart();
     }
