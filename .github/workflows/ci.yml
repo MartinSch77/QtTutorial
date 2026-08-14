@@ -46,7 +46,9 @@ on:
   workflow_dispatch:
 
 env:
-  QT_VERSION: "6.11.1"
+  # Qt version is set per-OS in the matrix below (Windows pins to an older
+  # patch release - see the matrix comment for why); QT_MODULES is shared
+  # since the same module set is available and needed on every platform.
   QT_MODULES: "qt5compat qtscxml qtserialport qtshadertools qtgraphs qtquick3d qtquick3dphysics qtquicktimeline qtwebsockets"
   # Runners have no display server; GUI-linked QTest binaries need this to
   # instantiate QApplication/QGuiApplication without a real windowing system.
@@ -61,21 +63,34 @@ jobs:
       matrix:
         include:
           - os: ubuntu-latest
+            qt_version: "6.11.1"
             qt_arch: ""
-          # Windows 6.11.1 has no combined per-version Updates.xml on Qt's
-          # official mirror (confirmed directly: download.qt.io/online/
-          # qtsdkrepository/windows_x86/desktop/qt6_6111/qt6_6111/
-          # Updates.xml 404s), only per-architecture ones
-          # (.../qt6_6111/qt6_6111_msvc2022_64/Updates.xml, confirmed 200)
-          # - without an explicit arch, install-qt-action/aqtinstall tries
-          # the combined listing first and fails before ever reaching the
-          # real per-arch data. This was a genuine, 100%-reproducible CI
-          # failure on every run in this project's history, not a flaky
-          # mirror issue.
-          - os: windows-latest
-            qt_arch: "win64_msvc2022_64"
           - os: macos-latest
+            qt_version: "6.11.1"
             qt_arch: ""
+          # Qt 6.11.0, 6.11.1 and 6.12.0 all have no combined per-version
+          # Updates.xml for Windows on Qt's official mirror (confirmed
+          # directly for each: download.qt.io/online/qtsdkrepository/
+          # windows_x86/desktop/qt6_<ver>/qt6_<ver>/Updates.xml 404s -
+          # apparently dropped from Qt's Windows publishing layout starting
+          # at 6.11 - while the identical Linux/macOS URLs, and every
+          # 6.10.x Windows URL checked, return 200). aqtinstall queries
+          # that combined listing to resolve the version at all, before an
+          # explicit `arch:` input ever comes into play, so no arch
+          # workaround exists - this is a real, 100%-reproducible gap in
+          # what Qt has published for Windows, not a flaky mirror issue,
+          # and it explains why this job has failed on every run in this
+          # project's history. Windows therefore pins to the newest
+          # release that does have this file, 6.10.2 - confirmed to still
+          # provide every one of this repo's QT_MODULES for Windows
+          # (checked each module's presence directly in that version's
+          # Updates.xml) - while Linux and macOS keep testing the newer
+          # 6.11.1 (whose extra features are all behind this repo's own
+          # optional/guarded CMake checks, so the two Qt versions build
+          # the same set of "safe" targets either way).
+          - os: windows-latest
+            qt_version: "6.10.2"
+            qt_arch: "win64_msvc2022_64"
 
     steps:
       - name: Checkout
@@ -84,7 +99,7 @@ jobs:
       - name: Install Qt
         uses: jurplel/install-qt-action@v4
         with:
-          version: ${{ env.QT_VERSION }}
+          version: ${{ matrix.qt_version }}
           modules: ${{ env.QT_MODULES }}
           arch: ${{ matrix.qt_arch }}
           cache: true
